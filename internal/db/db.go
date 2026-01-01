@@ -368,3 +368,152 @@ func (db *DB) SaveNotification(n *models.Notification) error {
 	n.ID, _ = result.LastInsertId()
 	return nil
 }
+
+// GetRecommendationsToday gets all recommendations from today
+func (db *DB) GetRecommendationsToday() ([]models.Recommendation, error) {
+	today := time.Now().Truncate(24 * time.Hour)
+	rows, err := db.conn.Query(`
+		SELECT id, symbol, action, confidence, reasoning, '', 0, '', generated_at, 'unknown'
+		FROM analysis_results WHERE generated_at >= ?
+	`, today)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recs []models.Recommendation
+	for rows.Next() {
+		var r models.Recommendation
+		var reasoning string
+		if err := rows.Scan(&r.ID, &r.Symbol, &r.Action, &r.Confidence, &reasoning,
+			&r.Timeframe, &r.TargetPrice, &r.Reasoning, &r.CreatedAt, &r.AIProvider); err != nil {
+			return nil, err
+		}
+		if r.Reasoning == "" {
+			r.Reasoning = reasoning
+		}
+		recs = append(recs, r)
+	}
+	return recs, nil
+}
+
+// GetRecentRecommendations gets recent recommendations
+func (db *DB) GetRecentRecommendations(limit int) ([]models.Recommendation, error) {
+	rows, err := db.conn.Query(`
+		SELECT id, symbol, action, confidence, reasoning, '', 0, '', generated_at, 'unknown'
+		FROM analysis_results ORDER BY generated_at DESC LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recs []models.Recommendation
+	for rows.Next() {
+		var r models.Recommendation
+		var reasoning string
+		if err := rows.Scan(&r.ID, &r.Symbol, &r.Action, &r.Confidence, &reasoning,
+			&r.Timeframe, &r.TargetPrice, &r.Reasoning, &r.CreatedAt, &r.AIProvider); err != nil {
+			return nil, err
+		}
+		if r.Reasoning == "" {
+			r.Reasoning = reasoning
+		}
+		recs = append(recs, r)
+	}
+	return recs, nil
+}
+
+// GetFilteredRecommendations gets recommendations with filters
+func (db *DB) GetFilteredRecommendations(action string, minConfidence float64, symbol string) ([]models.Recommendation, error) {
+	query := `SELECT id, symbol, action, confidence, reasoning, '', 0, '', generated_at, 'unknown'
+		FROM analysis_results WHERE 1=1`
+	args := []interface{}{}
+
+	if action != "" {
+		query += " AND action = ?"
+		args = append(args, action)
+	}
+	if minConfidence > 0 {
+		query += " AND confidence >= ?"
+		args = append(args, minConfidence)
+	}
+	if symbol != "" {
+		query += " AND symbol = ?"
+		args = append(args, symbol)
+	}
+	query += " ORDER BY generated_at DESC LIMIT 100"
+
+	rows, err := db.conn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var recs []models.Recommendation
+	for rows.Next() {
+		var r models.Recommendation
+		var reasoning string
+		if err := rows.Scan(&r.ID, &r.Symbol, &r.Action, &r.Confidence, &reasoning,
+			&r.Timeframe, &r.TargetPrice, &r.Reasoning, &r.CreatedAt, &r.AIProvider); err != nil {
+			return nil, err
+		}
+		if r.Reasoning == "" {
+			r.Reasoning = reasoning
+		}
+		recs = append(recs, r)
+	}
+	return recs, nil
+}
+
+// GetAnalysis gets a single analysis by ID
+func (db *DB) GetAnalysis(id int64) (*models.Analysis, error) {
+	var a models.Analysis
+	var priceTargetsJSON, risksJSON string
+	err := db.conn.QueryRow(`
+		SELECT id, symbol, action, confidence, reasoning, price_targets, risks, timeframe, generated_at
+		FROM analysis_results WHERE id = ?
+	`, id).Scan(&a.ID, &a.Symbol, &a.Recommendation.Action, &a.Recommendation.Confidence,
+		&a.Recommendation.Reasoning, &priceTargetsJSON, &risksJSON, &a.Recommendation.Timeframe, &a.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	a.AIProvider = "unknown"
+	return &a, nil
+}
+
+// GetConfig returns the app config for the settings page
+func (db *DB) GetConfig() (*models.AppConfig, error) {
+	uc, err := db.GetOrCreateConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	config := &models.AppConfig{
+		MarketDataProvider: uc.MarketDataProvider,
+		AIProvider:         uc.AIProvider,
+		AIModel:            uc.AIModel,
+		RiskTolerance:      uc.RiskTolerance,
+		TradeFrequency:     uc.TradeFrequency,
+		TrackedSymbols:     uc.TrackedSymbols,
+	}
+
+	// Get notification channels
+	channels, _ := db.GetNotificationChannels(uc.ID)
+	for _, ch := range channels {
+		switch ch.Type {
+		case "email":
+			config.EmailAddress = ch.Target
+			config.EmailEnabled = ch.Enabled
+		case "discord":
+			config.DiscordWebhook = ch.Target
+			config.DiscordEnabled = ch.Enabled
+		case "sms":
+			config.SMSPhone = ch.Target
+			config.SMSEnabled = ch.Enabled
+		}
+	}
+
+	return config, nil
+}

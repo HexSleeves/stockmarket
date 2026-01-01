@@ -1,0 +1,54 @@
+{{if .Stocks}}
+<div class="space-y-3">
+    {{range .Stocks}}
+    <article class="group flex items-center justify-between p-4 bg-bg-tertiary/50 rounded-xl 
+                    border border-transparent hover:border-accent/30 hover:bg-bg-tertiary
+                    transition-all duration-200 cursor-pointer" 
+             data-symbol="{{.Symbol}}">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-bg-secondary flex items-center justify-center
+                        group-hover:bg-accent/10 transition-colors duration-200">
+                <span class="font-semibold text-sm text-content-primary">{{slice .Symbol 0 2}}</span>
+            </div>
+            <div>
+                <h3 class="font-medium text-content-primary">{{.Symbol}}</h3>
+                <p class="text-sm text-content-muted">{{.Name}}</p>
+            </div>
+        </div>
+        <div class="text-right">
+            <p class="stock-price text-lg font-semibold font-mono text-content-primary">${{printf "%.2f" .Price}}</p>
+            <p class="stock-change flex items-center justify-end gap-1 text-sm font-medium font-mono
+                      {{if ge .ChangePercent 0.0}}text-positive{{else}}text-negative{{end}}">
+                {{if ge .ChangePercent 0.0}}
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+                {{else}}
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+                {{end}}
+                {{if ge .ChangePercent 0.0}}+{{end}}{{printf "%.2f" .ChangePercent}}%
+            </p>
+        </div>
+    </article>
+    {{end}}
+</div>
+{{else}}
+<div class="text-center py-12">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-bg-tertiary flex items-center justify-center">
+        <svg class="w-8 h-8 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+    </div>
+    <p class="text-content-secondary font-medium">No symbols tracked</p>
+    <p class="text-sm text-content-muted mt-1">Add stocks to your watchlist to see them here</p>
+    <a href="/settings" 
+       class="inline-flex items-center gap-2 mt-4 px-4 py-2 text-sm font-medium text-accent hover:text-accent-hover transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Add Symbols
+    </a>
+</div>
+{{end}}

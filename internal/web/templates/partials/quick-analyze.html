@@ -1,0 +1,21 @@
+{{if .Symbols}}
+<div class="flex flex-wrap gap-2">
+    {{range .Symbols}}
+    <button hx-post="/api/analyze" 
+            hx-vals='{"symbol": "{{.}}"}'
+            hx-target="#analysis-result" 
+            hx-swap="innerHTML"
+            hx-indicator="#analyze-spinner"
+            class="px-4 py-2 bg-bg-tertiary hover:bg-border text-content-primary font-medium 
+                   rounded-lg text-sm border border-border hover:border-accent/30
+                   transition-all duration-200 active:scale-[0.98]">
+        {{.}}
+    </button>
+    {{end}}
+</div>
+{{else}}
+<div class="text-center py-4">
+    <p class="text-sm text-content-muted">No tracked symbols.</p>
+    <a href="/settings" class="text-sm font-medium text-accent hover:text-accent-hover transition-colors">Add some</a>
+</div>
+{{end}}

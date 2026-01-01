@@ -1,0 +1,114 @@
+{{define "analysis-result"}}
+<div class="bg-bg-elevated rounded-xl border border-border overflow-hidden animate-fade-in">
+    <!-- Header -->
+    <div class="p-6 border-b border-border bg-bg-secondary/50">
+        <div class="flex items-start justify-between">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <span class="font-bold text-lg text-accent">{{slice .Symbol 0 2}}</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-content-primary">{{.Symbol}}</h2>
+                        <p class="text-sm text-content-muted">{{.CreatedAt.Format "January 02, 2006 at 15:04"}}</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Recommendation Badge -->
+            {{if eq .Recommendation.Action "BUY"}}
+            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold 
+                         rounded-lg bg-positive-bg text-positive border border-positive/20">
+                <span class="w-2 h-2 rounded-full bg-positive animate-pulse-subtle"></span>
+                BUY
+            </span>
+            {{else if eq .Recommendation.Action "SELL"}}
+            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold 
+                         rounded-lg bg-negative-bg text-negative border border-negative/20">
+                <span class="w-2 h-2 rounded-full bg-negative animate-pulse-subtle"></span>
+                SELL
+            </span>
+            {{else if eq .Recommendation.Action "HOLD"}}
+            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold 
+                         rounded-lg bg-bg-tertiary text-content-secondary border border-border">
+                HOLD
+            </span>
+            {{else}}
+            <span class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold 
+                         rounded-lg bg-warning-bg text-warning border border-warning/20">
+                <span class="w-2 h-2 rounded-full bg-warning animate-pulse-subtle"></span>
+                WATCH
+            </span>
+            {{end}}
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="p-6 border-b border-border">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 bg-bg-tertiary/50 rounded-xl border border-border">
+                <p class="text-xs font-medium text-content-muted uppercase tracking-wider mb-1">Confidence</p>
+                <p class="text-2xl font-bold font-mono text-accent">{{printf "%.0f" (mul .Recommendation.Confidence 100)}}%</p>
+            </div>
+            {{if .Recommendation.TargetPrice}}
+            <div class="p-4 bg-positive-bg/50 rounded-xl border border-positive/20">
+                <p class="text-xs font-medium text-content-muted uppercase tracking-wider mb-1">Target Price</p>
+                <p class="text-2xl font-bold font-mono text-positive">${{printf "%.2f" .Recommendation.TargetPrice}}</p>
+            </div>
+            {{end}}
+            {{if .Recommendation.StopLoss}}
+            <div class="p-4 bg-negative-bg/50 rounded-xl border border-negative/20">
+                <p class="text-xs font-medium text-content-muted uppercase tracking-wider mb-1">Stop Loss</p>
+                <p class="text-2xl font-bold font-mono text-negative">${{printf "%.2f" .Recommendation.StopLoss}}</p>
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    {{if .Recommendation.Reasoning}}
+    <!-- AI Analysis -->
+    <div class="p-6 border-b border-border">
+        <h3 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            AI Analysis
+        </h3>
+        <div class="p-4 bg-bg-tertiary/50 rounded-xl border border-border">
+            <p class="text-content-secondary leading-relaxed whitespace-pre-wrap">{{.Recommendation.Reasoning}}</p>
+        </div>
+    </div>
+    {{end}}
+
+    {{if .MarketData}}
+    <!-- Market Data -->
+    <div class="p-6">
+        <h3 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Market Data
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="p-3 bg-bg-tertiary/50 rounded-lg border border-border">
+                <p class="text-xs text-content-muted uppercase tracking-wider">Current Price</p>
+                <p class="text-lg font-semibold font-mono text-content-primary">${{printf "%.2f" .MarketData.Price}}</p>
+            </div>
+            <div class="p-3 bg-bg-tertiary/50 rounded-lg border border-border">
+                <p class="text-xs text-content-muted uppercase tracking-wider">Change</p>
+                <p class="text-lg font-semibold font-mono {{if ge .MarketData.ChangePercent 0.0}}text-positive{{else}}text-negative{{end}}">
+                    {{if ge .MarketData.ChangePercent 0.0}}+{{end}}{{printf "%.2f" .MarketData.ChangePercent}}%
+                </p>
+            </div>
+            <div class="p-3 bg-bg-tertiary/50 rounded-lg border border-border">
+                <p class="text-xs text-content-muted uppercase tracking-wider">Volume</p>
+                <p class="text-lg font-semibold font-mono text-content-primary">{{.MarketData.Volume}}</p>
+            </div>
+            <div class="p-3 bg-bg-tertiary/50 rounded-lg border border-border">
+                <p class="text-xs text-content-muted uppercase tracking-wider">Market Cap</p>
+                <p class="text-lg font-semibold font-mono text-content-primary">{{.MarketData.MarketCap}}</p>
+            </div>
+        </div>
+    </div>
+    {{end}}
+</div>
+{{end}}

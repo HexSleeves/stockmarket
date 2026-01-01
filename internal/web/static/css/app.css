@@ -1,0 +1,267 @@
+/* StockAI Design System - Custom Properties & Utilities */
+
+/* ===== CSS Custom Properties ===== */
+:root {
+  /* Light Mode */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --bg-tertiary: #F1F5F9;
+  --bg-elevated: #FFFFFF;
+  
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  --border-default: #E2E8F0;
+  --border-subtle: #F1F5F9;
+  
+  /* Accent Colors */
+  --accent-primary: #6366F1;
+  --accent-primary-hover: #4F46E5;
+  
+  /* Semantic Colors */
+  --positive: #10B981;
+  --positive-bg: #ECFDF5;
+  --negative: #EF4444;
+  --negative-bg: #FEF2F2;
+  --warning: #F59E0B;
+  --warning-bg: #FFFBEB;
+  --info: #3B82F6;
+  --info-bg: #EFF6FF;
+}
+
+.dark {
+  --bg-primary: #0B0F1A;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1F2937;
+  --bg-elevated: #1E293B;
+  
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+  
+  --border-default: #334155;
+  --border-subtle: #1E293B;
+  
+  --positive-bg: #064E3B;
+  --negative-bg: #7F1D1D;
+  --warning-bg: #78350F;
+  --info-bg: #1E3A8A;
+}
+
+/* ===== Base Styles ===== */
+html {
+  font-size: 16px;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ===== HTMX Transitions ===== */
+.htmx-swapping {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-out;
+}
+
+.htmx-settling {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.htmx-request .htmx-indicator {
+  display: inline-flex;
+}
+
+.htmx-indicator {
+  display: none;
+}
+
+/* Price change flash animations */
+.price-up {
+  animation: flashGreen 0.5s ease-out;
+}
+
+.price-down {
+  animation: flashRed 0.5s ease-out;
+}
+
+@keyframes flashGreen {
+  0% { background-color: var(--positive-bg); }
+  100% { background-color: transparent; }
+}
+
+@keyframes flashRed {
+  0% { background-color: var(--negative-bg); }
+  100% { background-color: transparent; }
+}
+
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes slideUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes ticker {
+  0% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Animation utility classes */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s infinite;
+}
+
+.animate-ticker {
+  animation: ticker 0.3s ease-out;
+}
+
+/* ===== Reduced Motion Support ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== Skip Link ===== */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  padding: 8px 16px;
+  background: var(--accent-primary);
+  color: white;
+  text-decoration: none;
+  z-index: 100;
+  transition: top 0.2s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ===== Form Element Enhancements ===== */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="tel"],
+input[type="number"],
+select,
+textarea {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: var(--accent-primary);
+}
+
+/* ===== Table Enhancements ===== */
+table {
+  border-collapse: collapse;
+}
+
+th {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+/* ===== Loading States ===== */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-secondary) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== Utility Classes ===== */
+[x-cloak] { display: none !important; }
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Consolas', monospace;
+}
+
+/* Number formatting for prices */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

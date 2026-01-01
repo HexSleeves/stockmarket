@@ -153,3 +153,53 @@ var TradeFrequencyProfiles = map[string]TradeFrequencyProfile{
 		SignalSensitivity: "Low sensitivity, strong trend/reversal signals only",
 	},
 }
+
+// Recommendation for the HTMX templates
+type Recommendation struct {
+	ID          int64     `json:"id"`
+	Symbol      string    `json:"symbol"`
+	Action      string    `json:"action"`
+	Confidence  float64   `json:"confidence"`
+	TargetPrice float64   `json:"target_price"`
+	StopLoss    float64   `json:"stop_loss"`
+	Reasoning   string    `json:"reasoning"`
+	Timeframe   string    `json:"timeframe"`
+	AIProvider  string    `json:"ai_provider"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// Alert for HTMX templates
+type Alert struct {
+	ID          int64     `json:"id"`
+	Symbol      string    `json:"symbol"`
+	Condition   string    `json:"condition"`
+	TargetPrice float64   `json:"target_price"`
+	Triggered   bool      `json:"triggered"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+// Analysis for HTMX templates
+type Analysis struct {
+	ID             int64           `json:"id"`
+	Symbol         string          `json:"symbol"`
+	Recommendation Recommendation  `json:"recommendation"`
+	MarketData     *Quote          `json:"market_data"`
+	AIProvider     string          `json:"ai_provider"`
+	CreatedAt      time.Time       `json:"created_at"`
+}
+
+// AppConfig for settings page
+type AppConfig struct {
+	MarketDataProvider string   `json:"market_data_provider"`
+	AIProvider         string   `json:"ai_provider"`
+	AIModel            string   `json:"ai_model"`
+	RiskTolerance      string   `json:"risk_tolerance"`
+	TradeFrequency     string   `json:"trade_frequency"`
+	TrackedSymbols     []string `json:"tracked_symbols"`
+	EmailAddress       string   `json:"email_address"`
+	EmailEnabled       bool     `json:"email_enabled"`
+	DiscordWebhook     string   `json:"discord_webhook"`
+	DiscordEnabled     bool     `json:"discord_enabled"`
+	SMSPhone           string   `json:"sms_phone"`
+	SMSEnabled         bool     `json:"sms_enabled"`
+}

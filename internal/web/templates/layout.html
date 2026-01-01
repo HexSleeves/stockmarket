@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - StockAI</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Theme initialization (prevent flash) -->
+    <script>
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              bg: {
+                primary: 'var(--bg-primary)',
+                secondary: 'var(--bg-secondary)',
+                tertiary: 'var(--bg-tertiary)',
+                elevated: 'var(--bg-elevated)',
+              },
+              content: {
+                primary: 'var(--text-primary)',
+                secondary: 'var(--text-secondary)',
+                muted: 'var(--text-muted)',
+              },
+              border: {
+                DEFAULT: 'var(--border-default)',
+                subtle: 'var(--border-subtle)',
+              },
+              accent: {
+                DEFAULT: 'var(--accent-primary)',
+                hover: 'var(--accent-primary-hover)',
+              },
+              positive: {
+                DEFAULT: 'var(--positive)',
+                bg: 'var(--positive-bg)',
+              },
+              negative: {
+                DEFAULT: 'var(--negative)',
+                bg: 'var(--negative-bg)',
+              },
+              warning: {
+                DEFAULT: 'var(--warning)',
+                bg: 'var(--warning-bg)',
+              },
+              info: {
+                DEFAULT: 'var(--info)',
+                bg: 'var(--info-bg)',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+              mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            },
+          },
+        },
+      }
+    </script>
+    
+    <!-- Custom CSS -->
+    <style>
+      /* CSS Custom Properties */
+      :root {
+        --bg-primary: #FFFFFF;
+        --bg-secondary: #F8FAFC;
+        --bg-tertiary: #F1F5F9;
+        --bg-elevated: #FFFFFF;
+        --text-primary: #0F172A;
+        --text-secondary: #475569;
+        --text-muted: #94A3B8;
+        --border-default: #E2E8F0;
+        --border-subtle: #F1F5F9;
+        --accent-primary: #6366F1;
+        --accent-primary-hover: #4F46E5;
+        --positive: #10B981;
+        --positive-bg: #ECFDF5;
+        --negative: #EF4444;
+        --negative-bg: #FEF2F2;
+        --warning: #F59E0B;
+        --warning-bg: #FFFBEB;
+        --info: #3B82F6;
+        --info-bg: #EFF6FF;
+      }
+      .dark {
+        --bg-primary: #0B0F1A;
+        --bg-secondary: #111827;
+        --bg-tertiary: #1F2937;
+        --bg-elevated: #1E293B;
+        --text-primary: #F8FAFC;
+        --text-secondary: #CBD5E1;
+        --text-muted: #64748B;
+        --border-default: #334155;
+        --border-subtle: #1E293B;
+        --positive-bg: #064E3B;
+        --negative-bg: #7F1D1D;
+        --warning-bg: #78350F;
+        --info-bg: #1E3A8A;
+      }
+      
+      /* HTMX Transitions */
+      .htmx-swapping { opacity: 0.5; transition: opacity 0.2s ease-out; }
+      .htmx-settling { animation: fadeIn 0.2s ease-out; }
+      .htmx-request .htmx-indicator { display: inline-flex; }
+      .htmx-indicator { display: none; }
+      
+      /* Animations */
+      @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+      @keyframes slideUp { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }
+      @keyframes slideDown { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
+      @keyframes pulseSubtle { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+      
+      .animate-fade-in { animation: fadeIn 0.2s ease-out; }
+      .animate-slide-up { animation: slideUp 0.3s ease-out; }
+      .animate-pulse-subtle { animation: pulseSubtle 2s infinite; }
+      
+      /* Price flash */
+      .price-up { animation: flashGreen 0.5s ease-out; }
+      .price-down { animation: flashRed 0.5s ease-out; }
+      @keyframes flashGreen { 0% { background-color: var(--positive-bg); } 100% { background-color: transparent; } }
+      @keyframes flashRed { 0% { background-color: var(--negative-bg); } 100% { background-color: transparent; } }
+      
+      /* Utilities */
+      [x-cloak] { display: none !important; }
+      
+      /* Scrollbar */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+      ::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+      
+      /* Skip link */
+      .skip-link { position: absolute; top: -40px; left: 0; padding: 8px 16px; background: var(--accent-primary); color: white; z-index: 100; transition: top 0.2s; }
+      .skip-link:focus { top: 0; }
+      
+      /* Reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body class="h-full bg-bg-primary text-content-primary font-sans">
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <nav class="w-64 h-screen bg-bg-secondary border-r border-border flex flex-col fixed left-0 top-0">
+            <!-- Logo -->
+            <div class="p-6 border-b border-border">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shadow-lg shadow-accent/25">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold text-content-primary">StockAI</span>
+                </a>
+            </div>
+            
+            <!-- Navigation Items -->
+            <div class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <a href="/" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{if eq .Page "dashboard"}}bg-accent/10 text-accent font-medium{{else}}text-content-secondary hover:bg-bg-tertiary hover:text-content-primary{{end}}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/analysis" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{if eq .Page "analysis"}}bg-accent/10 text-accent font-medium{{else}}text-content-secondary hover:bg-bg-tertiary hover:text-content-primary{{end}}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Analysis</span>
+                </a>
+                <a href="/recommendations" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{if eq .Page "recommendations"}}bg-accent/10 text-accent font-medium{{else}}text-content-secondary hover:bg-bg-tertiary hover:text-content-primary{{end}}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <span>Recommendations</span>
+                </a>
+                <a href="/alerts" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{if eq .Page "alerts"}}bg-accent/10 text-accent font-medium{{else}}text-content-secondary hover:bg-bg-tertiary hover:text-content-primary{{end}}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span>Alerts</span>
+                </a>
+                <a href="/settings" class="flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 {{if eq .Page "settings"}}bg-accent/10 text-accent font-medium{{else}}text-content-secondary hover:bg-bg-tertiary hover:text-content-primary{{end}}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Settings</span>
+                </a>
+            </div>
+            
+            <!-- Theme Toggle -->
+            <div class="p-4 border-t border-border">
+                <button 
+                    id="theme-toggle"
+                    onclick="toggleTheme()"
+                    class="flex items-center gap-3 w-full px-4 py-2.5 rounded-lg text-content-secondary hover:bg-bg-tertiary hover:text-content-primary transition-all duration-200"
+                    aria-label="Toggle dark mode"
+                >
+                    <!-- Sun icon (shown in dark mode) -->
+                    <svg class="hidden dark:block w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <!-- Moon icon (shown in light mode) -->
+                    <svg class="block dark:hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <span class="dark:hidden">Dark Mode</span>
+                    <span class="hidden dark:inline">Light Mode</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content" class="flex-1 ml-64 p-8 min-h-screen bg-bg-primary">
+            {{template "content" .}}
+        </main>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 space-y-3 z-50"></div>
+
+    <script>
+        // Theme toggle function
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        }
+
+        // Handle WebSocket messages for real-time updates
+        document.body.addEventListener('htmx:wsAfterMessage', function(event) {
+            try {
+                const data = JSON.parse(event.detail.message);
+                if (data.type === 'quote') {
+                    updateQuote(data.data);
+                }
+            } catch(e) {}
+        });
+
+        function updateQuote(quote) {
+            const el = document.querySelector(`[data-symbol="${quote.symbol}"]`);
+            if (el) {
+                const priceEl = el.querySelector('.stock-price');
+                const changeEl = el.querySelector('.stock-change');
+                if (priceEl) {
+                    const oldPrice = parseFloat(priceEl.textContent.replace('$', ''));
+                    priceEl.textContent = '$' + quote.price.toFixed(2);
+                    // Flash animation
+                    priceEl.classList.remove('price-up', 'price-down');
+                    if (quote.price > oldPrice) {
+                        priceEl.classList.add('price-up');
+                    } else if (quote.price < oldPrice) {
+                        priceEl.classList.add('price-down');
+                    }
+                }
+                if (changeEl) {
+                    const pct = quote.change_percent.toFixed(2);
+                    changeEl.textContent = (quote.change_percent >= 0 ? '+' : '') + pct + '%';
+                    changeEl.className = 'stock-change text-sm font-medium font-mono ' + 
+                        (quote.change_percent >= 0 ? 'text-positive' : 'text-negative');
+                }
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const icons = {
+                success: '<svg class="w-5 h-5 text-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="w-5 h-5 text-negative" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                info: '<svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>',
+                warning: '<svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>'
+            };
+            const borderColors = {
+                success: 'border-positive/30',
+                error: 'border-negative/30',
+                info: 'border-info/30',
+                warning: 'border-warning/30'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = `flex items-start gap-3 p-4 bg-bg-elevated border ${borderColors[type] || borderColors.info} rounded-xl shadow-xl max-w-sm animate-slide-up`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0">${icons[type] || icons.info}</div>
+                <p class="flex-1 text-sm text-content-primary">${message}</p>
+                <button onclick="this.parentElement.remove()" class="flex-shrink-0 text-content-muted hover:text-content-primary transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // Show toast on HTMX events
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            const trigger = event.detail.xhr.getResponseHeader('HX-Trigger');
+            if (trigger) {
+                try {
+                    const data = JSON.parse(trigger);
+                    if (data.showToast) showToast(data.showToast.message, data.showToast.type);
+                } catch(e) {}
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{{define "content"}}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-content-primary">Recommendations</h1>
+    <p class="text-content-secondary mt-1">All AI-generated trading signals and recommendations</p>
+</header>
+
+<!-- Filters -->
+<div class="bg-bg-elevated rounded-xl border border-border p-6 mb-8">
+    <h2 class="text-lg font-semibold text-content-primary mb-4">Filter Results</h2>
+    <form hx-get="/partials/recommendations-list" hx-target="#recommendations-list" hx-swap="innerHTML" hx-trigger="change, submit" hx-indicator="#filter-spinner">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-content-primary">Action</label>
+                <select name="action" 
+                        class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                               text-content-primary
+                               focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                               transition-all duration-200">
+                    <option value="">All Actions</option>
+                    <option value="BUY">BUY</option>
+                    <option value="SELL">SELL</option>
+                    <option value="HOLD">HOLD</option>
+                    <option value="WATCH">WATCH</option>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-content-primary">Min Confidence</label>
+                <select name="min_confidence" 
+                        class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                               text-content-primary
+                               focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                               transition-all duration-200">
+                    <option value="">Any</option>
+                    <option value="0.5">50%+</option>
+                    <option value="0.7">70%+</option>
+                    <option value="0.8">80%+</option>
+                    <option value="0.9">90%+</option>
+                </select>
+            </div>
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-content-primary">Symbol</label>
+                <input type="text" name="symbol" 
+                       class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                              text-content-primary placeholder:text-content-muted
+                              focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                              transition-all duration-200"
+                       placeholder="e.g., AAPL">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" 
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 
+                               bg-accent hover:bg-accent-hover text-white font-medium rounded-lg 
+                               transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    <span>Apply Filters</span>
+                    <div id="filter-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Recommendations List -->
+<div class="bg-bg-elevated rounded-xl border border-border overflow-hidden">
+    <div class="flex items-center justify-between p-6 border-b border-border">
+        <h2 class="text-lg font-semibold text-content-primary">All Recommendations</h2>
+        <button onclick="exportRecommendations()" 
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-content-secondary 
+                       hover:text-content-primary hover:bg-bg-tertiary rounded-lg transition-all duration-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Export</span>
+        </button>
+    </div>
+    <div id="recommendations-list" class="p-6" hx-get="/partials/recommendations-list" hx-trigger="load" hx-swap="innerHTML">
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function exportRecommendations() {
+    window.location.href = '/api/recommendations/export';
+}
+</script>
+{{end}}

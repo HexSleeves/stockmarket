@@ -1,0 +1,284 @@
+{{define "content"}}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-content-primary">Settings</h1>
+    <p class="text-content-secondary mt-1">Configure your API keys, preferences, and notifications</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Market Data Provider -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-info-bg rounded-lg">
+                <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-content-primary">Market Data Provider</h2>
+        </div>
+        <form hx-post="/api/config/market" hx-swap="none" hx-indicator="#market-spinner">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Provider</label>
+                    <select name="market_data_provider" 
+                            class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                   text-content-primary
+                                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                   transition-all duration-200">
+                        <option value="yahoo" {{if eq .Config.MarketDataProvider "yahoo"}}selected{{end}}>Yahoo Finance (Free, No Key)</option>
+                        <option value="alphavantage" {{if eq .Config.MarketDataProvider "alphavantage"}}selected{{end}}>Alpha Vantage</option>
+                        <option value="finnhub" {{if eq .Config.MarketDataProvider "finnhub"}}selected{{end}}>Finnhub</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">API Key</label>
+                    <input type="password" name="market_data_api_key" 
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="Leave empty to keep existing key">
+                    <p class="text-xs text-content-muted">Leave empty to keep existing key</p>
+                </div>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                               rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    Save Market Settings
+                    <div id="market-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- AI Provider -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-accent/10 rounded-lg">
+                <svg class="w-5 h-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-content-primary">AI Provider</h2>
+        </div>
+        <form hx-post="/api/config/ai" hx-swap="none" hx-indicator="#ai-spinner">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Provider</label>
+                    <select name="ai_provider" 
+                            class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                   text-content-primary
+                                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                   transition-all duration-200">
+                        <option value="openai" {{if eq .Config.AIProvider "openai"}}selected{{end}}>OpenAI</option>
+                        <option value="claude" {{if eq .Config.AIProvider "claude"}}selected{{end}}>Claude (Anthropic)</option>
+                        <option value="gemini" {{if eq .Config.AIProvider "gemini"}}selected{{end}}>Gemini (Google)</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Model</label>
+                    <input type="text" name="ai_model" value="{{.Config.AIModel}}"
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted font-mono text-sm
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="e.g., gpt-4o, claude-3-sonnet">
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">API Key</label>
+                    <input type="password" name="ai_provider_api_key" 
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="Leave empty to keep existing key">
+                </div>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                               rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    Save AI Settings
+                    <div id="ai-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Trading Strategy -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-positive-bg rounded-lg">
+                <svg class="w-5 h-5 text-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-content-primary">Trading Strategy</h2>
+        </div>
+        <form hx-post="/api/config/strategy" hx-swap="none" hx-indicator="#strategy-spinner">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Risk Tolerance</label>
+                    <select name="risk_tolerance" 
+                            class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                   text-content-primary
+                                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                   transition-all duration-200">
+                        <option value="conservative" {{if eq .Config.RiskTolerance "conservative"}}selected{{end}}>Conservative - Capital preservation</option>
+                        <option value="moderate" {{if eq .Config.RiskTolerance "moderate"}}selected{{end}}>Moderate - Balanced growth/risk</option>
+                        <option value="aggressive" {{if eq .Config.RiskTolerance "aggressive"}}selected{{end}}>Aggressive - Maximum growth</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Trade Frequency</label>
+                    <select name="trade_frequency" 
+                            class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                   text-content-primary
+                                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                   transition-all duration-200">
+                        <option value="daily" {{if eq .Config.TradeFrequency "daily"}}selected{{end}}>Daily Trading</option>
+                        <option value="weekly" {{if eq .Config.TradeFrequency "weekly"}}selected{{end}}>Weekly Trading</option>
+                        <option value="swing" {{if eq .Config.TradeFrequency "swing"}}selected{{end}}>Swing Trading (2-6 weeks)</option>
+                    </select>
+                </div>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                               rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    Save Strategy
+                    <div id="strategy-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Watchlist -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="p-2 bg-warning-bg rounded-lg">
+                <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+            </div>
+            <h2 class="text-lg font-semibold text-content-primary">Watchlist</h2>
+        </div>
+        <form hx-post="/api/config/watchlist" hx-swap="none" hx-indicator="#watchlist-spinner">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-content-primary">Tracked Symbols</label>
+                    <input type="text" name="tracked_symbols" value="{{range $i, $s := .Config.TrackedSymbols}}{{if $i}}, {{end}}{{$s}}{{end}}"
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted font-mono text-sm
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="AAPL, GOOGL, MSFT, ...">
+                    <p class="text-xs text-content-muted">Comma-separated stock symbols</p>
+                </div>
+                <button type="submit" 
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                               rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                    Save Watchlist
+                    <div id="watchlist-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Notifications Section -->
+<div class="mt-6 bg-bg-elevated rounded-xl border border-border p-6">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 bg-negative-bg rounded-lg">
+            <svg class="w-5 h-5 text-negative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+        </div>
+        <h2 class="text-lg font-semibold text-content-primary">Notifications</h2>
+    </div>
+    <form hx-post="/api/config/notifications" hx-swap="none" hx-indicator="#notif-spinner">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Email -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-content-primary uppercase tracking-wider">Email</h3>
+                <div class="space-y-3">
+                    <input type="email" name="email_address" value="{{.Config.EmailAddress}}"
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="your@email.com">
+                    <label class="flex items-center gap-3 text-content-secondary cursor-pointer group">
+                        <input type="checkbox" name="email_enabled" {{if .Config.EmailEnabled}}checked{{end}}
+                               class="w-5 h-5 rounded border-border bg-bg-primary text-accent focus:ring-accent focus:ring-offset-0">
+                        <span class="text-sm group-hover:text-content-primary transition-colors">Enable email notifications</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Discord -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-content-primary uppercase tracking-wider">Discord</h3>
+                <div class="space-y-3">
+                    <input type="text" name="discord_webhook" value="{{.Config.DiscordWebhook}}"
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="Webhook URL">
+                    <label class="flex items-center gap-3 text-content-secondary cursor-pointer group">
+                        <input type="checkbox" name="discord_enabled" {{if .Config.DiscordEnabled}}checked{{end}}
+                               class="w-5 h-5 rounded border-border bg-bg-primary text-accent focus:ring-accent focus:ring-offset-0">
+                        <span class="text-sm group-hover:text-content-primary transition-colors">Enable Discord notifications</span>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- SMS -->
+            <div class="space-y-4">
+                <h3 class="text-sm font-semibold text-content-primary uppercase tracking-wider">SMS (Twilio)</h3>
+                <div class="space-y-3">
+                    <input type="tel" name="sms_phone" value="{{.Config.SMSPhone}}"
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="+1234567890">
+                    <label class="flex items-center gap-3 text-content-secondary cursor-pointer group">
+                        <input type="checkbox" name="sms_enabled" {{if .Config.SMSEnabled}}checked{{end}}
+                               class="w-5 h-5 rounded border-border bg-bg-primary text-accent focus:ring-accent focus:ring-offset-0">
+                        <span class="text-sm group-hover:text-content-primary transition-colors">Enable SMS notifications</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="mt-6 pt-6 border-t border-border">
+            <button type="submit" 
+                    class="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                           rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-accent/50">
+                Save Notification Settings
+                <div id="notif-spinner" class="htmx-indicator">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}

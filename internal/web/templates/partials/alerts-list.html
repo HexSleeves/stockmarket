@@ -1,0 +1,68 @@
+{{if .Alerts}}
+<div class="space-y-3">
+    {{range .Alerts}}
+    <article class="flex items-center justify-between p-4 bg-bg-tertiary/50 rounded-xl 
+                    border border-border hover:border-accent/30 transition-all duration-200">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center
+                        {{if eq .Condition "above"}}bg-positive-bg{{else}}bg-negative-bg{{end}}">
+                {{if eq .Condition "above"}}
+                <svg class="w-5 h-5 text-positive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
+                {{else}}
+                <svg class="w-5 h-5 text-negative" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
+                {{end}}
+            </div>
+            <div>
+                <h3 class="font-semibold text-content-primary">{{.Symbol}}</h3>
+                <p class="text-sm text-content-muted">
+                    Price {{.Condition}} 
+                    <span class="font-mono font-medium text-content-secondary">${{printf "%.2f" .TargetPrice}}</span>
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            {{if .Triggered}}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold 
+                         rounded-full bg-positive-bg text-positive border border-positive/20">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Triggered
+            </span>
+            {{else}}
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold 
+                         rounded-full bg-bg-tertiary text-content-secondary border border-border">
+                <span class="w-1.5 h-1.5 rounded-full bg-content-muted animate-pulse-subtle"></span>
+                Active
+            </span>
+            {{end}}
+            <button hx-delete="/api/alerts/{{.ID}}" 
+                    hx-target="#alerts-list" 
+                    hx-swap="innerHTML"
+                    hx-confirm="Delete this alert?"
+                    class="p-2 text-content-muted hover:text-negative hover:bg-negative-bg/50 
+                           rounded-lg transition-all duration-200"
+                    aria-label="Delete alert">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            </button>
+        </div>
+    </article>
+    {{end}}
+</div>
+{{else}}
+<div class="text-center py-16">
+    <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-bg-tertiary flex items-center justify-center">
+        <svg class="w-10 h-10 text-content-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+        </svg>
+    </div>
+    <p class="text-lg font-medium text-content-secondary">No active alerts</p>
+    <p class="text-sm text-content-muted mt-1">Create an alert to get notified when prices change</p>
+</div>
+{{end}}

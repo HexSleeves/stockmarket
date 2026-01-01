@@ -1,0 +1,83 @@
+{{define "content"}}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-content-primary">Stock Analysis</h1>
+    <p class="text-content-secondary mt-1">AI-powered stock analysis and recommendations</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Analysis Form -->
+    <div class="lg:col-span-2 bg-bg-elevated rounded-xl border border-border p-6">
+        <h2 class="text-lg font-semibold text-content-primary mb-6">Run Analysis</h2>
+        <form hx-post="/api/analyze" hx-target="#analysis-result" hx-swap="innerHTML" hx-indicator="#analyze-spinner">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="space-y-2">
+                    <label for="symbol" class="block text-sm font-medium text-content-primary">Stock Symbol</label>
+                    <input type="text" id="symbol" name="symbol" 
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="e.g., AAPL, GOOGL, MSFT" 
+                           value="{{.Symbol}}"
+                           required>
+                </div>
+                <div class="space-y-2">
+                    <label for="context" class="block text-sm font-medium text-content-primary">Additional Context <span class="text-content-muted font-normal">(Optional)</span></label>
+                    <input type="text" id="context" name="context" 
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="Any specific notes or context">
+                </div>
+            </div>
+            <button type="submit" 
+                    class="inline-flex items-center gap-2 px-6 py-2.5 bg-accent hover:bg-accent-hover text-white font-medium 
+                           rounded-lg transition-all duration-200 
+                           focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-bg-primary
+                           active:scale-[0.98]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Analyze Stock</span>
+                <div id="analyze-spinner" class="htmx-indicator">
+                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+            </button>
+        </form>
+    </div>
+
+    <!-- Quick Analyze -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <h2 class="text-lg font-semibold text-content-primary mb-2">Quick Analyze</h2>
+        <p class="text-sm text-content-muted mb-4">Analyze your tracked symbols:</p>
+        <div id="quick-analyze-buttons" hx-get="/partials/quick-analyze" hx-trigger="load" hx-swap="innerHTML">
+            <div class="flex items-center justify-center py-4">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-accent border-t-transparent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Result -->
+<div id="analysis-result" class="mb-8">
+    {{if .Result}}
+    {{template "analysis-result" .Result}}
+    {{end}}
+</div>
+
+<!-- Analysis History -->
+<div class="bg-bg-elevated rounded-xl border border-border overflow-hidden">
+    <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold text-content-primary">Analysis History</h2>
+    </div>
+    <div id="analysis-history" class="p-6" hx-get="/partials/analysis-history?limit=20" hx-trigger="load" hx-swap="innerHTML">
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,88 @@
+{{define "content"}}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight text-content-primary">Price Alerts</h1>
+    <p class="text-content-secondary mt-1">Set up price alerts for your tracked stocks</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Create Alert Form -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <h2 class="text-lg font-semibold text-content-primary mb-6">Create Alert</h2>
+        <form hx-post="/api/alerts" hx-target="#alerts-list" hx-swap="innerHTML" hx-on::after-request="this.reset()" hx-indicator="#create-alert-spinner">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label for="alert-symbol" class="block text-sm font-medium text-content-primary">Symbol</label>
+                    <input type="text" id="alert-symbol" name="symbol" 
+                           class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                  text-content-primary placeholder:text-content-muted
+                                  focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                  transition-all duration-200"
+                           placeholder="e.g., AAPL" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="condition" class="block text-sm font-medium text-content-primary">Condition</label>
+                        <select id="condition" name="condition" 
+                                class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                       text-content-primary
+                                       focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                       transition-all duration-200">
+                            <option value="above">Price Above</option>
+                            <option value="below">Price Below</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="price" class="block text-sm font-medium text-content-primary">Price</label>
+                        <input type="number" id="price" name="target_price" step="0.01" min="0"
+                               class="w-full px-4 py-2.5 bg-bg-primary border border-border rounded-lg
+                                      text-content-primary placeholder:text-content-muted font-mono
+                                      focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20
+                                      transition-all duration-200"
+                               placeholder="0.00" required>
+                    </div>
+                </div>
+                <button type="submit" 
+                        class="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 
+                               bg-accent hover:bg-accent-hover text-white font-medium rounded-lg 
+                               transition-all duration-200 
+                               focus:outline-none focus:ring-2 focus:ring-accent/50 focus:ring-offset-2 focus:ring-offset-bg-primary
+                               active:scale-[0.98]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <span>Create Alert</span>
+                    <div id="create-alert-spinner" class="htmx-indicator">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Quick Add from Watchlist -->
+    <div class="bg-bg-elevated rounded-xl border border-border p-6">
+        <h2 class="text-lg font-semibold text-content-primary mb-2">Quick Add from Watchlist</h2>
+        <p class="text-sm text-content-muted mb-4">Select a symbol to pre-fill the form:</p>
+        <div id="watchlist-alerts" hx-get="/partials/watchlist-alert-buttons" hx-trigger="load" hx-swap="innerHTML">
+            <div class="flex items-center justify-center py-8">
+                <div class="animate-spin rounded-full h-6 w-6 border-2 border-accent border-t-transparent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Alerts -->
+<div class="bg-bg-elevated rounded-xl border border-border overflow-hidden">
+    <div class="p-6 border-b border-border">
+        <h2 class="text-lg font-semibold text-content-primary">Active Alerts</h2>
+    </div>
+    <div id="alerts-list" class="p-6" hx-get="/partials/alerts-list" hx-trigger="load" hx-swap="innerHTML">
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-2 border-accent border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+{{end}}
