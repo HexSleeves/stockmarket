@@ -13,6 +13,7 @@ type UserConfig struct {
 	RiskTolerance         string                 `json:"risk_tolerance"`          // "conservative" | "moderate" | "aggressive"
 	TradeFrequency        string                 `json:"trade_frequency"`         // "daily" | "weekly" | "swing"
 	TrackedSymbols        []string               `json:"tracked_symbols"`         // e.g., ["AAPL", "GOOGL", "MSFT"]
+	PollingInterval       int                    `json:"polling_interval"`        // in seconds, default 30
 	NotificationChannels  []NotificationConfig   `json:"notification_channels"`
 	CreatedAt             time.Time              `json:"created_at"`
 	UpdatedAt             time.Time              `json:"updated_at"`
@@ -191,11 +192,16 @@ type Analysis struct {
 // AppConfig for settings page
 type AppConfig struct {
 	MarketDataProvider string   `json:"market_data_provider"`
+	HasMarketAPIKey    bool     `json:"has_market_api_key"`
+	MarketAPIKeyMasked string   `json:"market_api_key_masked"`
 	AIProvider         string   `json:"ai_provider"`
+	HasAIAPIKey        bool     `json:"has_ai_api_key"`
+	AIAPIKeyMasked     string   `json:"ai_api_key_masked"`
 	AIModel            string   `json:"ai_model"`
 	RiskTolerance      string   `json:"risk_tolerance"`
 	TradeFrequency     string   `json:"trade_frequency"`
 	TrackedSymbols     []string `json:"tracked_symbols"`
+	PollingInterval    int      `json:"polling_interval"` // in seconds
 	EmailAddress       string   `json:"email_address"`
 	EmailEnabled       bool     `json:"email_enabled"`
 	DiscordWebhook     string   `json:"discord_webhook"`

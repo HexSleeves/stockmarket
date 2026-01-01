@@ -65,6 +65,8 @@ func (s *Server) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/config/ai", s.handleConfigAI)
 	mux.HandleFunc("/api/config/strategy", s.handleConfigStrategy)
 	mux.HandleFunc("/api/config/watchlist", s.handleConfigWatchlist)
+	mux.HandleFunc("/api/config/watchlist/", s.handleConfigWatchlistSymbol)
+	mux.HandleFunc("/api/config/polling", s.handleConfigPolling)
 	mux.HandleFunc("/api/config/notifications", s.handleConfigNotifications)
 
 	// Market data
@@ -926,6 +928,133 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 	}
 
 	htmxSuccess(w, "Watchlist saved")
+}
+
+// handleConfigWatchlistSymbol handles adding/deleting individual watchlist symbols
+func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Request) {
+	symbol := strings.TrimPrefix(r.URL.Path, "/api/config/watchlist/")
+	symbol = strings.ToUpper(strings.TrimSpace(symbol))
+
+	if symbol == "" {
+		htmxError(w, "Symbol required")
+		return
+	}
+
+	cfg, err := s.db.GetOrCreateConfig()
+	if err != nil {
+		htmxError(w, err.Error())
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		// Add symbol if not already in list
+		found := false
+		for _, s := range cfg.TrackedSymbols {
+			if s == symbol {
+				found = true
+				break
+			}
+		}
+		if !found {
+			cfg.TrackedSymbols = append(cfg.TrackedSymbols, symbol)
+		}
+
+	case http.MethodDelete:
+		// Remove symbol from list
+		newSymbols := []string{}
+		for _, s := range cfg.TrackedSymbols {
+			if s != symbol {
+				newSymbols = append(newSymbols, s)
+			}
+		}
+		cfg.TrackedSymbols = newSymbols
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := s.db.UpdateConfig(cfg); err != nil {
+		htmxError(w, err.Error())
+		return
+	}
+
+	// Return updated watchlist partial
+	s.renderWatchlistSettings(w, cfg.TrackedSymbols)
+}
+
+// renderWatchlistSettings renders the watchlist-settings partial
+func (s *Server) renderWatchlistSettings(w http.ResponseWriter, symbols []string) {
+	w.Header().Set("Content-Type", "text/html")
+
+	if len(symbols) == 0 {
+		w.Write([]byte(`<div class="text-center py-6">
+    <p class="text-sm text-content-muted">No symbols in watchlist</p>
+</div>`))
+		return
+	}
+
+	html := `<div class="space-y-2">`
+	for _, sym := range symbols {
+		html += fmt.Sprintf(`
+  <div class="flex items-center justify-between p-3 bg-bg-tertiary/50 rounded-lg border border-border group hover:border-accent/30 transition-all duration-200">
+    <div class="flex items-center gap-3">
+      <span class="font-mono font-semibold text-content-primary">%s</span>
+    </div>
+    <button
+      hx-delete="/api/config/watchlist/%s"
+      hx-target="#watchlist-items"
+      hx-swap="innerHTML"
+      hx-confirm="Remove %s from watchlist?"
+      class="p-1.5 text-content-muted hover:text-negative hover:bg-negative-bg/50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
+      aria-label="Remove %s"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>`, sym, sym, sym, sym)
+	}
+	html += `\n</div>`
+
+	w.Write([]byte(html))
+}
+
+// handleConfigPolling handles polling interval settings
+func (s *Server) handleConfigPolling(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		htmxError(w, "Invalid form data")
+		return
+	}
+
+	cfg, err := s.db.GetOrCreateConfig()
+	if err != nil {
+		htmxError(w, err.Error())
+		return
+	}
+
+	intervalStr := r.FormValue("polling_interval")
+	if intervalStr != "" {
+		interval, err := strconv.Atoi(intervalStr)
+		if err != nil || interval < 5 || interval > 300 {
+			htmxError(w, "Polling interval must be between 5 and 300 seconds")
+			return
+		}
+		cfg.PollingInterval = interval
+	}
+
+	if err := s.db.UpdateConfig(cfg); err != nil {
+		htmxError(w, err.Error())
+		return
+	}
+
+	htmxSuccess(w, "Polling settings saved")
 }
 
 // handleConfigNotifications handles notification settings (form data for HTMX)

@@ -48,6 +48,7 @@ func (db *DB) migrate() error {
 		risk_tolerance TEXT DEFAULT 'moderate',
 		trade_frequency TEXT DEFAULT 'weekly',
 		tracked_symbols TEXT DEFAULT '[]',
+		polling_interval INTEGER DEFAULT 30,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -99,7 +100,14 @@ func (db *DB) migrate() error {
 	`
 
 	_, err := db.conn.Exec(schema)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Run column migrations (ignore errors for existing columns)
+	db.conn.Exec(`ALTER TABLE user_config ADD COLUMN polling_interval INTEGER DEFAULT 30`)
+
+	return nil
 }
 
 // GetOrCreateConfig gets the user config or creates a default one
@@ -110,19 +118,19 @@ func (db *DB) GetOrCreateConfig() (*models.UserConfig, error) {
 	err := db.conn.QueryRow(`
 		SELECT id, market_data_provider, market_data_api_key, ai_provider,
 		       ai_provider_api_key, ai_model, risk_tolerance, trade_frequency,
-		       tracked_symbols, created_at, updated_at
+		       tracked_symbols, COALESCE(polling_interval, 30), created_at, updated_at
 		FROM user_config LIMIT 1
 	`).Scan(
 		&config.ID, &config.MarketDataProvider, &config.MarketDataAPIKey,
 		&config.AIProvider, &config.AIProviderAPIKey, &config.AIModel,
 		&config.RiskTolerance, &config.TradeFrequency, &trackedSymbolsJSON,
-		&config.CreatedAt, &config.UpdatedAt,
+		&config.PollingInterval, &config.CreatedAt, &config.UpdatedAt,
 	)
 
 	if err == sql.ErrNoRows {
 		// Create default config
 		result, err := db.conn.Exec(`
-			INSERT INTO user_config (tracked_symbols) VALUES ('[]')
+			INSERT INTO user_config (tracked_symbols, polling_interval) VALUES ('[]', 30)
 		`)
 		if err != nil {
 			return nil, err
@@ -135,6 +143,7 @@ func (db *DB) GetOrCreateConfig() (*models.UserConfig, error) {
 		config.RiskTolerance = "moderate"
 		config.TradeFrequency = "weekly"
 		config.TrackedSymbols = []string{}
+		config.PollingInterval = 30
 		config.CreatedAt = time.Now()
 		config.UpdatedAt = time.Now()
 		return &config, nil
@@ -145,6 +154,11 @@ func (db *DB) GetOrCreateConfig() (*models.UserConfig, error) {
 
 	// Parse tracked symbols
 	json.Unmarshal([]byte(trackedSymbolsJSON), &config.TrackedSymbols)
+
+	// Default polling interval if not set
+	if config.PollingInterval == 0 {
+		config.PollingInterval = 30
+	}
 
 	// Load notification channels
 	channels, err := db.GetNotificationChannels(config.ID)
@@ -170,13 +184,14 @@ func (db *DB) UpdateConfig(config *models.UserConfig) error {
 			risk_tolerance = ?,
 			trade_frequency = ?,
 			tracked_symbols = ?,
+			polling_interval = ?,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
 	`,
 		config.MarketDataProvider, config.MarketDataAPIKey,
 		config.AIProvider, config.AIProviderAPIKey, config.AIModel,
 		config.RiskTolerance, config.TradeFrequency, string(trackedSymbolsJSON),
-		config.ID,
+		config.PollingInterval, config.ID,
 	)
 	return err
 }
@@ -492,11 +507,14 @@ func (db *DB) GetConfig() (*models.AppConfig, error) {
 
 	config := &models.AppConfig{
 		MarketDataProvider: uc.MarketDataProvider,
+		HasMarketAPIKey:    uc.MarketDataAPIKey != "",
 		AIProvider:         uc.AIProvider,
+		HasAIAPIKey:        uc.AIProviderAPIKey != "",
 		AIModel:            uc.AIModel,
 		RiskTolerance:      uc.RiskTolerance,
 		TradeFrequency:     uc.TradeFrequency,
 		TrackedSymbols:     uc.TrackedSymbols,
+		PollingInterval:    uc.PollingInterval,
 	}
 
 	// Get notification channels
