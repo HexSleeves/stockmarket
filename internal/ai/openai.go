@@ -29,7 +29,7 @@ func NewOpenAI(apiKey string, model string) *OpenAI {
 	return &OpenAI{
 		apiKey: apiKey,
 		model:  model,
-		client: &http.Client{Timeout: 60 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 

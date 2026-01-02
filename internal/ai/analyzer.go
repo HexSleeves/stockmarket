@@ -4,9 +4,27 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
+	"net/http"
+	"time"
 
 	"stockmarket/internal/models"
 )
+
+// Shared HTTP client with optimized transport for all AI providers
+var sharedHTTPClient = &http.Client{
+	Timeout: 60 * time.Second,
+	Transport: &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   10 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:        50,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+	},
+}
 
 // Analyzer defines the interface for AI analysis providers
 type Analyzer interface {

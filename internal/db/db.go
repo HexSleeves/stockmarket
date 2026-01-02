@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"encoding/json"
+	"sync"
 	"time"
 
 	"stockmarket/internal/models"
@@ -13,17 +14,39 @@ import (
 // DB wraps the database connection
 type DB struct {
 	conn *sql.DB
+
+	// Config cache with TTL
+	configCache     *models.UserConfig
+	configCacheTime time.Time
+	configCacheMu   sync.RWMutex
 }
+
+// configCacheTTL is how long to cache config before refreshing
+const configCacheTTL = 5 * time.Second
 
 // New creates a new database connection and initializes schema
 func New(path string) (*DB, error) {
-	conn, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on")
+	conn, err := sql.Open("sqlite3", path+"?_journal_mode=WAL&_foreign_keys=on&_busy_timeout=5000")
 	if err != nil {
+		return nil, err
+	}
+
+	// Connection pool settings for SQLite
+	// SQLite doesn't benefit from many connections, but these prevent resource exhaustion
+	conn.SetMaxOpenConns(25)
+	conn.SetMaxIdleConns(5)
+	conn.SetConnMaxLifetime(5 * time.Minute)
+	conn.SetConnMaxIdleTime(1 * time.Minute)
+
+	// Verify connection is working
+	if err := conn.Ping(); err != nil {
+		conn.Close()
 		return nil, err
 	}
 
 	db := &DB{conn: conn}
 	if err := db.migrate(); err != nil {
+		conn.Close()
 		return nil, err
 	}
 
@@ -110,8 +133,41 @@ func (db *DB) migrate() error {
 	return nil
 }
 
-// GetOrCreateConfig gets the user config or creates a default one
+// GetOrCreateConfig gets the user config or creates a default one (with caching)
 func (db *DB) GetOrCreateConfig() (*models.UserConfig, error) {
+	// Check cache first
+	db.configCacheMu.RLock()
+	if db.configCache != nil && time.Since(db.configCacheTime) < configCacheTTL {
+		// Return a copy to prevent mutation
+		cached := *db.configCache
+		cached.TrackedSymbols = append([]string{}, db.configCache.TrackedSymbols...)
+		cached.NotificationChannels = append([]models.NotificationConfig{}, db.configCache.NotificationChannels...)
+		db.configCacheMu.RUnlock()
+		return &cached, nil
+	}
+	db.configCacheMu.RUnlock()
+
+	// Cache miss - fetch from DB
+	config, err := db.fetchConfigFromDB()
+	if err != nil {
+		return nil, err
+	}
+
+	// Update cache
+	db.configCacheMu.Lock()
+	db.configCache = config
+	db.configCacheTime = time.Now()
+	db.configCacheMu.Unlock()
+
+	// Return a copy
+	result := *config
+	result.TrackedSymbols = append([]string{}, config.TrackedSymbols...)
+	result.NotificationChannels = append([]models.NotificationConfig{}, config.NotificationChannels...)
+	return &result, nil
+}
+
+// fetchConfigFromDB retrieves config directly from database
+func (db *DB) fetchConfigFromDB() (*models.UserConfig, error) {
 	var config models.UserConfig
 	var trackedSymbolsJSON string
 
@@ -193,7 +249,20 @@ func (db *DB) UpdateConfig(config *models.UserConfig) error {
 		config.RiskTolerance, config.TradeFrequency, string(trackedSymbolsJSON),
 		config.PollingInterval, config.ID,
 	)
+
+	// Invalidate cache on update
+	if err == nil {
+		db.InvalidateConfigCache()
+	}
+
 	return err
+}
+
+// InvalidateConfigCache clears the config cache
+func (db *DB) InvalidateConfigCache() {
+	db.configCacheMu.Lock()
+	db.configCache = nil
+	db.configCacheMu.Unlock()
 }
 
 // GetNotificationChannels gets all notification channels for a config
@@ -229,8 +298,10 @@ func (db *DB) SaveNotificationChannel(configID int64, ch *models.NotificationCon
 		enabled = 1
 	}
 
+	var err error
 	if ch.ID == 0 {
-		result, err := db.conn.Exec(`
+		var result sql.Result
+		result, err = db.conn.Exec(`
 			INSERT INTO notification_channels (config_id, type, target, enabled, events)
 			VALUES (?, ?, ?, ?, ?)
 		`, configID, ch.Type, ch.Target, enabled, string(eventsJSON))
@@ -238,13 +309,18 @@ func (db *DB) SaveNotificationChannel(configID int64, ch *models.NotificationCon
 			return err
 		}
 		ch.ID, _ = result.LastInsertId()
-		return nil
+	} else {
+		_, err = db.conn.Exec(`
+			UPDATE notification_channels SET type = ?, target = ?, enabled = ?, events = ?
+			WHERE id = ?
+		`, ch.Type, ch.Target, enabled, string(eventsJSON), ch.ID)
 	}
 
-	_, err := db.conn.Exec(`
-		UPDATE notification_channels SET type = ?, target = ?, enabled = ?, events = ?
-		WHERE id = ?
-	`, ch.Type, ch.Target, enabled, string(eventsJSON), ch.ID)
+	// Invalidate config cache since notification channels are part of config
+	if err == nil {
+		db.InvalidateConfigCache()
+	}
+
 	return err
 }
 

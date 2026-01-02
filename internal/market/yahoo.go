@@ -20,7 +20,7 @@ type YahooFinance struct {
 // NewYahooFinance creates a new Yahoo Finance provider
 func NewYahooFinance() *YahooFinance {
 	return &YahooFinance{
-		client: &http.Client{Timeout: 30 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 

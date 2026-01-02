@@ -22,7 +22,7 @@ type Finnhub struct {
 func NewFinnhub(apiKey string) *Finnhub {
 	return &Finnhub{
 		apiKey: apiKey,
-		client: &http.Client{Timeout: 30 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 

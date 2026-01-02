@@ -180,8 +180,8 @@ func (s *Server) checkAndTriggerAlerts(quote models.Quote, cfg *models.UserConfi
 
 // BroadcastAlert sends an alert message to all connected WebSocket clients
 func (s *Server) BroadcastAlert(symbol, message string) {
-	s.clientsMu.RLock()
-	defer s.clientsMu.RUnlock()
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
 
 	msg := map[string]interface{}{
 		"type":    "alert",
@@ -191,17 +191,22 @@ func (s *Server) BroadcastAlert(symbol, message string) {
 	}
 
 	for conn := range s.clients {
-		conn.WriteJSON(msg)
+		if err := conn.WriteJSON(msg); err != nil {
+			// Mark for removal but don't modify map during iteration
+			log.Printf("WebSocket write error: %v", err)
+		}
 	}
 }
 
 // BroadcastToClients sends a message to all connected WebSocket clients
 func (s *Server) BroadcastToClients(msg interface{}) {
-	s.clientsMu.RLock()
-	defer s.clientsMu.RUnlock()
+	s.clientsMu.Lock()
+	defer s.clientsMu.Unlock()
 
 	for conn := range s.clients {
-		conn.WriteJSON(msg)
+		if err := conn.WriteJSON(msg); err != nil {
+			log.Printf("WebSocket write error: %v", err)
+		}
 	}
 }
 

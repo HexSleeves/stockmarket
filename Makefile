@@ -57,6 +57,7 @@ gen-key:
 restart:
 	@echo "Rebuilding and restarting service..."
 	@make build
+	@sudo systemctl daemon-reload
 	@sudo systemctl restart stockmarket
 	@sleep 2
 	@sudo systemctl status stockmarket --no-pager | head -15

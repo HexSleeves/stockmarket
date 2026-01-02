@@ -151,13 +151,17 @@ func (s *Server) renderAlertsList(w http.ResponseWriter) {
 		return
 	}
 
-	html := `<div class="space-y-3">`
+	// Use strings.Builder to avoid repeated string concatenation allocations
+	var sb strings.Builder
+	sb.Grow(len(alerts) * 512) // Pre-allocate estimated size
+
+	sb.WriteString(`<div class="space-y-3">`)
 	for _, a := range alerts {
 		icon := "⬆️"
 		if a.Condition == "below" {
 			icon = "⬇️"
 		}
-		html += fmt.Sprintf(`
+		fmt.Fprintf(&sb, `
     <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
         <div class="flex items-center gap-4">
             <span class="text-2xl">%s</span>
@@ -181,9 +185,9 @@ func (s *Server) renderAlertsList(w http.ResponseWriter) {
     </div>
 `, icon, a.Symbol, a.Condition, a.Price, a.ID)
 	}
-	html += `</div>`
+	sb.WriteString(`</div>`)
 
-	w.Write([]byte(html))
+	w.Write([]byte(sb.String()))
 }
 
 // HTMX response helpers

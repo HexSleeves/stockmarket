@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"stockmarket/internal/models"
 )
@@ -28,7 +27,7 @@ func NewGemini(apiKey string, model string) *Gemini {
 	return &Gemini{
 		apiKey: apiKey,
 		model:  model,
-		client: &http.Client{Timeout: 60 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 
@@ -45,7 +44,8 @@ func (g *Gemini) Analyze(ctx context.Context, req models.AnalysisRequest) (*mode
 
 	prompt := BuildPrompt(req)
 
-	url := fmt.Sprintf("%s/%s:generateContent?key=%s", geminiBaseURL, g.model, g.apiKey)
+	// Use header-based auth instead of URL param to prevent key from being logged
+	url := fmt.Sprintf("%s/%s:generateContent", geminiBaseURL, g.model)
 
 	requestBody := map[string]interface{}{
 		"contents": []map[string]interface{}{
@@ -72,6 +72,7 @@ func (g *Gemini) Analyze(ctx context.Context, req models.AnalysisRequest) (*mode
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("x-goog-api-key", g.apiKey)
 
 	resp, err := g.client.Do(httpReq)
 	if err != nil {

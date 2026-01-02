@@ -294,32 +294,45 @@ func (s *Server) handleConfigNotifications(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	var updateErrors []string
+
 	// Handle email
 	emailAddr := r.FormValue("email_address")
 	emailEnabled := r.FormValue("email_enabled") == "on"
 	if emailAddr != "" || emailEnabled {
-		s.updateNotificationChannel(cfg.ID, "email", emailAddr, emailEnabled)
+		if err := s.updateNotificationChannel(cfg.ID, "email", emailAddr, emailEnabled); err != nil {
+			updateErrors = append(updateErrors, "email")
+		}
 	}
 
 	// Handle discord
 	discordWebhook := r.FormValue("discord_webhook")
 	discordEnabled := r.FormValue("discord_enabled") == "on"
 	if discordWebhook != "" || discordEnabled {
-		s.updateNotificationChannel(cfg.ID, "discord", discordWebhook, discordEnabled)
+		if err := s.updateNotificationChannel(cfg.ID, "discord", discordWebhook, discordEnabled); err != nil {
+			updateErrors = append(updateErrors, "discord")
+		}
 	}
 
 	// Handle SMS
 	smsPhone := r.FormValue("sms_phone")
 	smsEnabled := r.FormValue("sms_enabled") == "on"
 	if smsPhone != "" || smsEnabled {
-		s.updateNotificationChannel(cfg.ID, "sms", smsPhone, smsEnabled)
+		if err := s.updateNotificationChannel(cfg.ID, "sms", smsPhone, smsEnabled); err != nil {
+			updateErrors = append(updateErrors, "sms")
+		}
+	}
+
+	if len(updateErrors) > 0 {
+		htmxError(w, fmt.Sprintf("Failed to update: %s", strings.Join(updateErrors, ", ")))
+		return
 	}
 
 	htmxSuccess(w, "Notification settings saved")
 }
 
 // updateNotificationChannel is a helper for updating individual notification channels
-func (s *Server) updateNotificationChannel(configID int64, channelType, target string, enabled bool) {
+func (s *Server) updateNotificationChannel(configID int64, channelType, target string, enabled bool) error {
 	ch := &models.NotificationConfig{
 		Type:    channelType,
 		Target:  target,
@@ -327,6 +340,8 @@ func (s *Server) updateNotificationChannel(configID int64, channelType, target s
 	}
 
 	if err := s.db.SaveNotificationChannel(configID, ch); err != nil {
-		log.Printf("Failed to update notification channel: %v", err)
+		log.Printf("Failed to update notification channel %s: %v", channelType, err)
+		return err
 	}
+	return nil
 }

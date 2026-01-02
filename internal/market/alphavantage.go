@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -24,7 +25,7 @@ type AlphaVantage struct {
 func NewAlphaVantage(apiKey string) *AlphaVantage {
 	return &AlphaVantage{
 		apiKey: apiKey,
-		client: &http.Client{Timeout: 30 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 
@@ -195,15 +196,10 @@ func (av *AlphaVantage) GetHistoricalData(ctx context.Context, symbol string, pe
 		})
 	}
 
-	// Sort by timestamp (newest first)
-	// Note: Alpha Vantage returns data in arbitrary order, so we need to sort
-	for i := 0; i < len(candles)-1; i++ {
-		for j := i + 1; j < len(candles); j++ {
-			if candles[i].Timestamp.Before(candles[j].Timestamp) {
-				candles[i], candles[j] = candles[j], candles[i]
-			}
-		}
-	}
+	// Sort by timestamp (newest first) - O(n log n)
+	sort.Slice(candles, func(i, j int) bool {
+		return candles[i].Timestamp.After(candles[j].Timestamp)
+	})
 
 	return candles, nil
 }

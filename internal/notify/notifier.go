@@ -3,9 +3,27 @@ package notify
 import (
 	"errors"
 	"log"
+	"net"
+	"net/http"
+	"time"
 
 	"stockmarket/internal/models"
 )
+
+// Shared HTTP client with optimized transport for all notifiers
+var sharedHTTPClient = &http.Client{
+	Timeout: 10 * time.Second,
+	Transport: &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   5 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:        50,
+		MaxIdleConnsPerHost: 10,
+		IdleConnTimeout:     90 * time.Second,
+		TLSHandshakeTimeout: 5 * time.Second,
+	},
+}
 
 // Notifier defines the interface for notification dispatchers
 type Notifier interface {

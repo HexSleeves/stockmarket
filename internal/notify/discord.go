@@ -18,7 +18,7 @@ type DiscordNotifier struct {
 // NewDiscordNotifier creates a new Discord notifier
 func NewDiscordNotifier() *DiscordNotifier {
 	return &DiscordNotifier{
-		client: &http.Client{Timeout: 10 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 

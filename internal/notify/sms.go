@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
-	"time"
 
 	"stockmarket/internal/models"
 )
@@ -21,11 +21,26 @@ type SMSNotifier struct {
 
 // NewSMSNotifier creates a new SMS notifier (Twilio)
 func NewSMSNotifier(config map[string]string) *SMSNotifier {
+	accountSID := config["twilio_account_sid"]
+	if accountSID == "" {
+		accountSID = os.Getenv("TWILIO_ACCOUNT_SID")
+	}
+
+	authToken := config["twilio_auth_token"]
+	if authToken == "" {
+		authToken = os.Getenv("TWILIO_AUTH_TOKEN")
+	}
+
+	fromNumber := config["twilio_from_number"]
+	if fromNumber == "" {
+		fromNumber = os.Getenv("TWILIO_FROM_NUMBER")
+	}
+
 	return &SMSNotifier{
-		accountSID: config["twilio_account_sid"],
-		authToken:  config["twilio_auth_token"],
-		fromNumber: config["twilio_from_number"],
-		client:     &http.Client{Timeout: 10 * time.Second},
+		accountSID: accountSID,
+		authToken:  authToken,
+		fromNumber: fromNumber,
+		client:     sharedHTTPClient,
 	}
 }
 

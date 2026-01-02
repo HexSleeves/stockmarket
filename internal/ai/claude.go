@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"stockmarket/internal/models"
 )
@@ -28,7 +27,7 @@ func NewClaude(apiKey string, model string) *Claude {
 	return &Claude{
 		apiKey: apiKey,
 		model:  model,
-		client: &http.Client{Timeout: 60 * time.Second},
+		client: sharedHTTPClient,
 	}
 }
 
