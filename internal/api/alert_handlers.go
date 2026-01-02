@@ -2,12 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"stockmarket/internal/models"
+	"stockmarket/internal/web/pages"
 )
 
 func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +110,7 @@ func (s *Server) handleAlertsHTMX(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return updated alerts list
-	s.renderAlertsList(w)
+	s.renderAlertsList(w, r)
 }
 
 // handleAlertDeleteHTMX handles deleting alerts and returns updated list
@@ -123,7 +123,7 @@ func (s *Server) handleAlertDeleteHTMX(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/alerts/")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		htmxError(w, INVALID_ALERT_ID)
+		htmxError(w, "Invalid alert ID")
 		return
 	}
 
@@ -132,62 +132,26 @@ func (s *Server) handleAlertDeleteHTMX(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.renderAlertsList(w)
+	s.renderAlertsList(w, r)
 }
 
-func (s *Server) renderAlertsList(w http.ResponseWriter) {
-	alerts, _ := s.db.GetActiveAlerts()
+func (s *Server) renderAlertsList(w http.ResponseWriter, r *http.Request) {
+	alertsRaw, _ := s.db.GetActiveAlerts()
+
+	// Convert to pages.Alert
+	alerts := make([]pages.Alert, len(alertsRaw))
+	for i, a := range alertsRaw {
+		alerts[i] = pages.Alert{
+			ID:          a.ID,
+			Symbol:      a.Symbol,
+			Condition:   a.Condition,
+			TargetPrice: a.Price,
+			Triggered:   a.Triggered,
+		}
+	}
 
 	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-
-	if len(alerts) == 0 {
-		w.Write([]byte(`
-<div class="text-center py-12">
-    <div class="text-5xl mb-3">🔔</div>
-    <p class="text-slate-400">No active alerts</p>
-    <p class="text-slate-500 text-sm mt-1">Create an alert to get notified when prices change</p>
-</div>
-`))
-		return
-	}
-
-	// Use strings.Builder to avoid repeated string concatenation allocations
-	var sb strings.Builder
-	sb.Grow(len(alerts) * 512) // Pre-allocate estimated size
-
-	sb.WriteString(`<div class="space-y-3">`)
-	for _, a := range alerts {
-		icon := "⬆️"
-		if a.Condition == "below" {
-			icon = "⬇️"
-		}
-		fmt.Fprintf(&sb, `
-    <div class="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
-        <div class="flex items-center gap-4">
-            <span class="text-2xl">%s</span>
-            <div>
-                <div class="font-medium text-white">%s</div>
-                <div class="text-sm text-slate-400">
-                    Price %s $%.2f
-                </div>
-            </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <span class="px-2 py-1 rounded text-xs font-medium bg-slate-600 text-slate-300">Active</span>
-            <button hx-delete="/api/alerts/%d"
-                    hx-target="#alerts-list"
-                    hx-swap="innerHTML"
-                    hx-confirm="Delete this alert?"
-                    class="text-red-400 hover:text-red-300 text-sm">
-                Delete
-            </button>
-        </div>
-    </div>
-`, icon, a.Symbol, a.Condition, a.Price, a.ID)
-	}
-	sb.WriteString(`</div>`)
-
-	w.Write([]byte(sb.String()))
+	pages.AlertsListPartial(alerts).Render(r.Context(), w)
 }
 
 // HTMX response helpers

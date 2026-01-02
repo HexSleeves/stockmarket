@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"html"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 
 	"stockmarket/internal/config"
 	"stockmarket/internal/models"
+	"stockmarket/internal/web/pages"
 )
 
 // handleConfigMarket handles market data provider configuration updates
@@ -157,7 +157,7 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 	for _, existing := range cfg.TrackedSymbols {
 		if existing == symbol {
 			// Already exists, just return the list
-			s.renderWatchlistSettings(w, cfg.TrackedSymbols)
+			s.renderWatchlistSettings(w, r, cfg.TrackedSymbols)
 			return
 		}
 	}
@@ -169,7 +169,7 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.renderWatchlistSettings(w, cfg.TrackedSymbols)
+	s.renderWatchlistSettings(w, r, cfg.TrackedSymbols)
 }
 
 // handleConfigWatchlistSymbol handles individual symbol deletion
@@ -209,36 +209,13 @@ func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	s.renderWatchlistSettings(w, cfg.TrackedSymbols)
+	s.renderWatchlistSettings(w, r, cfg.TrackedSymbols)
 }
 
-// renderWatchlistSettings renders the watchlist items HTML
-func (s *Server) renderWatchlistSettings(w http.ResponseWriter, symbols []string) {
+// renderWatchlistSettings renders the watchlist items using templ
+func (s *Server) renderWatchlistSettings(w http.ResponseWriter, r *http.Request, symbols []string) {
 	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-
-	if len(symbols) == 0 {
-		fmt.Fprint(w, `<div class="text-center py-6"><p class="text-sm text-content-muted">No symbols in watchlist</p></div>`)
-		return
-	}
-
-	for _, symbol := range symbols {
-		esymbol := html.EscapeString(symbol)
-		fmt.Fprintf(w, `
-		<div class="flex items-center justify-between p-3 bg-bg-tertiary/50 rounded-lg border border-border group hover:border-accent/30 transition-all duration-200">
-			<span class="font-mono font-semibold text-content-primary">%s</span>
-			<button
-				hx-delete="/api/config/watchlist/%s"
-				hx-target="#watchlist-items"
-				hx-swap="innerHTML"
-				hx-confirm="Remove %s from watchlist?"
-				class="p-1.5 text-content-muted hover:text-negative hover:bg-negative-bg/50 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
-				aria-label="Remove %s">
-				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-				</svg>
-			</button>
-		</div>`, esymbol, esymbol, esymbol, esymbol)
-	}
+	pages.WatchlistSettingsItemsPartial(symbols).Render(r.Context(), w)
 }
 
 // handleConfigPolling handles polling interval configuration

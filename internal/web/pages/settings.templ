@@ -193,6 +193,19 @@ templ WatchlistSettings(symbols []string) {
 	</div>
 }
 
+// WatchlistSettingsItemsPartial renders just the watchlist items for HTMX updates
+templ WatchlistSettingsItemsPartial(symbols []string) {
+	if len(symbols) == 0 {
+		<div class="text-center py-6">
+			<p class="text-sm text-content-muted">No symbols in watchlist</p>
+		</div>
+	} else {
+		for _, symbol := range symbols {
+			@WatchlistSettingsItem(symbol)
+		}
+	}
+}
+
 // WatchlistSettingsItem renders a single watchlist item with delete button
 templ WatchlistSettingsItem(symbol string) {
 	<div class="flex items-center justify-between p-3 bg-bg-tertiary/50 rounded-lg border border-border group hover:border-accent/30 transition-all duration-200">

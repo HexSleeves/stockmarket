@@ -242,3 +242,11 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// ErrorMessage displays an error message for HTMX responses
+templ ErrorMessage(message string) {
+	<div class="flex items-center gap-3 p-4 bg-negative-bg/50 border border-negative/20 rounded-xl text-negative">
+		@icons.ExclamationCircle("w-5 h-5 flex-shrink-0")
+		<p class="text-sm font-medium">{ message }</p>
+	</div>
+}

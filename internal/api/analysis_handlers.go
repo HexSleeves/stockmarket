@@ -14,6 +14,8 @@ import (
 	"stockmarket/internal/config"
 	"stockmarket/internal/market"
 	"stockmarket/internal/models"
+	c "stockmarket/internal/web/components"
+	"stockmarket/internal/web/pages"
 )
 
 func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
@@ -169,16 +171,18 @@ func (s *Server) handleAnalysesForSymbol(w http.ResponseWriter, r *http.Request)
 	respondJSON(w, http.StatusOK, analyses)
 }
 
-// handleAlerts handles price alerts CRUD
+// handleAnalyzeHTMX handles HTMX form submissions for stock analysis
 func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
+	ctx := r.Context()
+
 	if err := r.ParseForm(); err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Invalid form data</div>`))
+		c.ErrorMessage(INVALID_FORM_DATA).Render(ctx, w)
 		return
 	}
 
@@ -187,7 +191,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 
 	if symbol == "" {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Symbol is required</div>`))
+		c.ErrorMessage(SYMBOL_REQUIRED).Render(ctx, w)
 		return
 	}
 
@@ -195,7 +199,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Failed to load config</div>`))
+		c.ErrorMessage(FAILED_TO_GET_CONFIG).Render(ctx, w)
 		return
 	}
 
@@ -207,18 +211,18 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	provider, err := market.NewProvider(cfg.MarketDataProvider, marketAPIKey)
 	if err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Market provider error: ` + err.Error() + `</div>`))
+		c.ErrorMessage("Market provider error: "+err.Error()).Render(ctx, w)
 		return
 	}
 
-	quote, err := provider.GetQuote(r.Context(), symbol)
+	quote, err := provider.GetQuote(ctx, symbol)
 	if err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Failed to get quote: ` + err.Error() + `</div>`))
+		c.ErrorMessage(FAILED_TO_GET_QUOTE+": "+err.Error()).Render(ctx, w)
 		return
 	}
 
-	historical, _ := provider.GetHistoricalData(r.Context(), symbol, "1d")
+	historical, _ := provider.GetHistoricalData(ctx, symbol, "1d")
 
 	// Get AI analyzer
 	aiAPIKey := cfg.AIProviderAPIKey
@@ -229,7 +233,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	analyzer, err := ai.NewAnalyzer(cfg.AIProvider, aiAPIKey, cfg.AIModel)
 	if err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">AI provider error: ` + err.Error() + `</div>`))
+		c.ErrorMessage(FAILED_TO_GET_ANALYZE+": "+err.Error()).Render(ctx, w)
 		return
 	}
 
@@ -243,70 +247,54 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 		UserContext:    userContext,
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+	analysisCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	result, err := analyzer.Analyze(ctx, analysisReq)
+	result, err := analyzer.Analyze(analysisCtx, analysisReq)
 	if err != nil {
 		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-		w.Write([]byte(`<div class="text-red-400 p-4">Analysis failed: ` + err.Error() + `</div>`))
+		c.ErrorMessage(FAILED_TO_GET_ANALYZE+": "+err.Error()).Render(ctx, w)
 		return
 	}
 
 	// Save to database
 	s.db.SaveAnalysis(result)
 
-	// Return HTML partial
+	// Convert to pages.AnalysisResult and render
+	analysisResult := pages.AnalysisResult{
+		Symbol:     result.Symbol,
+		CreatedAt:  time.Now(),
+		AIProvider: cfg.AIProvider,
+		Recommendation: pages.AnalysisRecommendation{
+			Action:      result.Action,
+			Confidence:  result.Confidence,
+			TargetPrice: result.PriceTargets.Target,
+			StopLoss:    result.PriceTargets.StopLoss,
+			Reasoning:   result.Reasoning,
+		},
+		MarketData: &pages.MarketData{
+			Price:         quote.Price,
+			ChangePercent: quote.ChangePercent,
+			Volume:        formatVolume(quote.Volume),
+			MarketCap:     "-",
+		},
+	}
+
 	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
-	html := fmt.Sprintf(`
-<div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
-    <div class="flex items-start justify-between mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-white">%s Analysis</h2>
-            <p class="text-slate-400 text-sm">%s</p>
-        </div>
-        <span class="px-4 py-2 rounded-lg text-lg font-bold %s">
-            %s
-        </span>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-slate-700/50 rounded-lg p-4">
-            <div class="text-slate-400 text-sm">Confidence</div>
-            <div class="text-2xl font-bold text-white">%.0f%%</div>
-        </div>
-        <div class="bg-slate-700/50 rounded-lg p-4">
-            <div class="text-slate-400 text-sm">Current Price</div>
-            <div class="text-2xl font-bold text-white">$%.2f</div>
-        </div>
-        <div class="bg-slate-700/50 rounded-lg p-4">
-            <div class="text-slate-400 text-sm">Timeframe</div>
-            <div class="text-2xl font-bold text-white">%s</div>
-        </div>
-    </div>
-
-    <div class="mb-6">
-        <h3 class="text-lg font-semibold text-white mb-3">AI Analysis</h3>
-        <div class="bg-slate-700/50 rounded-lg p-4 text-slate-300 whitespace-pre-wrap">%s</div>
-    </div>
-</div>
-`, result.Symbol, time.Now().Format("January 02, 2006 at 15:04"),
-		getActionClass(result.Action), result.Action,
-		result.Confidence*100, quote.Price, result.Timeframe, result.Reasoning)
-
-	w.Write([]byte(html))
+	pages.AnalysisResultCard(analysisResult).Render(ctx, w)
 }
 
-func getActionClass(action string) string {
-	switch action {
-	case "BUY":
-		return "bg-green-500/20 text-green-400"
-	case "SELL":
-		return "bg-red-500/20 text-red-400"
-	case "HOLD":
-		return "bg-yellow-500/20 text-yellow-400"
+// formatVolume formats a volume number for display
+func formatVolume(vol int64) string {
+	switch {
+	case vol >= 1_000_000_000:
+		return strconv.FormatFloat(float64(vol)/1_000_000_000, 'f', 2, 64) + "B"
+	case vol >= 1_000_000:
+		return strconv.FormatFloat(float64(vol)/1_000_000, 'f', 2, 64) + "M"
+	case vol >= 1_000:
+		return strconv.FormatFloat(float64(vol)/1_000, 'f', 2, 64) + "K"
 	default:
-		return "bg-blue-500/20 text-blue-400"
+		return strconv.FormatInt(vol, 10)
 	}
 }
 

@@ -133,9 +133,9 @@ templ layoutScripts() {
 			// Build WebSocket URL based on current location
 			const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 			const wsUrl = `${protocol}//${window.location.host}/api/ws`;
-			
+
 			console.log('Connecting to WebSocket:', wsUrl);
-			
+
 			try {
 				ws = new WebSocket(wsUrl);
 			} catch (e) {
@@ -188,7 +188,7 @@ templ layoutScripts() {
 		function updateConnectionStatus(connected) {
 			const indicator = document.getElementById('ws-status');
 			if (indicator) {
-				indicator.className = connected 
+				indicator.className = connected
 					? 'w-2 h-2 rounded-full bg-positive animate-pulse-subtle'
 					: 'w-2 h-2 rounded-full bg-negative';
 				indicator.title = connected ? 'Real-time updates connected' : 'Disconnected - reconnecting...';
