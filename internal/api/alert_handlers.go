@@ -23,7 +23,7 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var alert models.PriceAlert
 		if err := json.NewDecoder(r.Body).Decode(&alert); err != nil {
-			respondError(w, http.StatusBadRequest, "Invalid JSON")
+			respondError(w, http.StatusBadRequest, INVALID_JSON)
 			return
 		}
 
@@ -45,14 +45,14 @@ func (s *Server) handleAlerts(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, http.StatusCreated, alert)
 
 	default:
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 	}
 }
 
 // handleAlertDelete deletes a price alert
 func (s *Server) handleAlertDelete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
@@ -74,12 +74,12 @@ func (s *Server) handleAlertDelete(w http.ResponseWriter, r *http.Request) {
 // handleNotificationChannels handles notification channel CRUD
 func (s *Server) handleAlertsHTMX(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		htmxError(w, "Invalid form data")
+		htmxError(w, INVALID_FORM_DATA)
 		return
 	}
 
@@ -88,13 +88,13 @@ func (s *Server) handleAlertsHTMX(w http.ResponseWriter, r *http.Request) {
 	priceStr := r.FormValue("target_price")
 
 	if symbol == "" || condition == "" || priceStr == "" {
-		htmxError(w, "All fields are required")
+		htmxError(w, ALL_FIELDS_REQUIRED)
 		return
 	}
 
 	price, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
-		htmxError(w, "Invalid price")
+		htmxError(w, INVALID_PRICE)
 		return
 	}
 
@@ -116,14 +116,14 @@ func (s *Server) handleAlertsHTMX(w http.ResponseWriter, r *http.Request) {
 // handleAlertDeleteHTMX handles deleting alerts and returns updated list
 func (s *Server) handleAlertDeleteHTMX(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/alerts/")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		htmxError(w, "Invalid alert ID")
+		htmxError(w, INVALID_ALERT_ID)
 		return
 	}
 
@@ -138,7 +138,7 @@ func (s *Server) handleAlertDeleteHTMX(w http.ResponseWriter, r *http.Request) {
 func (s *Server) renderAlertsList(w http.ResponseWriter) {
 	alerts, _ := s.db.GetActiveAlerts()
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 
 	if len(alerts) == 0 {
 		w.Write([]byte(`

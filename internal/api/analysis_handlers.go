@@ -18,13 +18,13 @@ import (
 
 func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/analyze/")
 	if symbol == "" {
-		respondError(w, http.StatusBadRequest, "Symbol required")
+		respondError(w, http.StatusBadRequest, SYMBOL_REQUIRED)
 		return
 	}
 	symbol = strings.ToUpper(symbol)
@@ -57,13 +57,13 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 
 	quote, err := provider.GetQuote(ctx, symbol)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "Failed to get quote: "+err.Error())
+		respondError(w, http.StatusBadRequest, FAILED_TO_GET_QUOTE+": "+err.Error())
 		return
 	}
 
 	historical, err := provider.GetHistoricalData(ctx, symbol, "1m")
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "Failed to get historical data: "+err.Error())
+		respondError(w, http.StatusBadRequest, FAILED_TO_GET_HISTORICAL_DATA+": "+err.Error())
 		return
 	}
 
@@ -75,7 +75,7 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 
 	analyzer, err := ai.NewAnalyzer(cfg.AIProvider, aiAPIKey, cfg.AIModel)
 	if err != nil {
-		respondError(w, http.StatusBadRequest, "AI provider error: "+err.Error())
+		respondError(w, http.StatusBadRequest, FAILED_TO_GET_ANALYZE+": "+err.Error())
 		return
 	}
 
@@ -91,7 +91,7 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 
 	analysis, err := analyzer.Analyze(ctx, analysisReq)
 	if err != nil {
-		respondError(w, http.StatusInternalServerError, "Analysis failed: "+err.Error())
+		respondError(w, http.StatusInternalServerError, FAILED_TO_GET_ANALYZE+": "+err.Error())
 		return
 	}
 
@@ -117,7 +117,7 @@ func (s *Server) handleAnalyze(w http.ResponseWriter, r *http.Request) {
 // handleAnalyses returns recent analysis results
 func (s *Server) handleAnalyses(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
@@ -141,13 +141,13 @@ func (s *Server) handleAnalyses(w http.ResponseWriter, r *http.Request) {
 // handleAnalysesForSymbol returns analyses for a specific symbol
 func (s *Server) handleAnalysesForSymbol(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/analyses/")
 	if symbol == "" {
-		respondError(w, http.StatusBadRequest, "Symbol required")
+		respondError(w, http.StatusBadRequest, SYMBOL_REQUIRED)
 		return
 	}
 	symbol = strings.ToUpper(symbol)
@@ -172,12 +172,12 @@ func (s *Server) handleAnalysesForSymbol(w http.ResponseWriter, r *http.Request)
 // handleAlerts handles price alerts CRUD
 func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Invalid form data</div>`))
 		return
 	}
@@ -186,7 +186,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	userContext := r.FormValue("context")
 
 	if symbol == "" {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Symbol is required</div>`))
 		return
 	}
@@ -194,7 +194,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	// Get config
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Failed to load config</div>`))
 		return
 	}
@@ -206,14 +206,14 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	}
 	provider, err := market.NewProvider(cfg.MarketDataProvider, marketAPIKey)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Market provider error: ` + err.Error() + `</div>`))
 		return
 	}
 
 	quote, err := provider.GetQuote(r.Context(), symbol)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Failed to get quote: ` + err.Error() + `</div>`))
 		return
 	}
@@ -228,7 +228,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 
 	analyzer, err := ai.NewAnalyzer(cfg.AIProvider, aiAPIKey, cfg.AIModel)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">AI provider error: ` + err.Error() + `</div>`))
 		return
 	}
@@ -248,7 +248,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 
 	result, err := analyzer.Analyze(ctx, analysisReq)
 	if err != nil {
-		w.Header().Set("Content-Type", "text/html")
+		w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 		w.Write([]byte(`<div class="text-red-400 p-4">Analysis failed: ` + err.Error() + `</div>`))
 		return
 	}
@@ -257,7 +257,7 @@ func (s *Server) handleAnalyzeHTMX(w http.ResponseWriter, r *http.Request) {
 	s.db.SaveAnalysis(result)
 
 	// Return HTML partial
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 	html := fmt.Sprintf(`
 <div class="bg-slate-800 rounded-xl border border-slate-700 p-6">
     <div class="flex items-start justify-between mb-6">

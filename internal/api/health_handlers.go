@@ -106,14 +106,14 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 		respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
 
 	default:
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 	}
 }
 
 // handleQuote fetches a stock quote
 func (s *Server) handleProfiles(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 

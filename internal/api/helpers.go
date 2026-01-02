@@ -8,7 +8,7 @@ import (
 
 // respondJSON sends a JSON response
 func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
 }

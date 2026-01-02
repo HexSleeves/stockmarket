@@ -59,14 +59,14 @@ func (s *Server) handleNotificationChannels(w http.ResponseWriter, r *http.Reque
 		respondJSON(w, http.StatusOK, channel)
 
 	default:
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 	}
 }
 
 // handleNotificationChannelDelete deletes a notification channel
 func (s *Server) handleNotificationChannelDelete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 

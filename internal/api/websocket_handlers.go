@@ -15,6 +15,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const (
+	PRICE_ALERT = "Price Alert: %s"
+)
+
 func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -38,8 +42,8 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	// Get user config for tracked symbols
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		log.Printf("Failed to get config: %v", err)
-		conn.WriteJSON(map[string]string{"type": "error", "message": "Failed to get config"})
+		log.Printf(FAILED_TO_GET_CONFIG, err)
+		conn.WriteJSON(map[string]string{"type": "error", "message": FAILED_TO_GET_CONFIG})
 		return
 	}
 
@@ -154,7 +158,7 @@ func (s *Server) checkAndTriggerAlerts(quote models.Quote, cfg *models.UserConfi
 			writeMu.Lock()
 			conn.WriteJSON(map[string]interface{}{
 				"type":    "alert",
-				"title":   fmt.Sprintf("Price Alert: %s", alert.Symbol),
+				"title":   fmt.Sprintf(PRICE_ALERT, alert.Symbol),
 				"message": message,
 				"symbol":  alert.Symbol,
 				"price":   quote.Price,
@@ -167,7 +171,7 @@ func (s *Server) checkAndTriggerAlerts(quote models.Quote, cfg *models.UserConfi
 			// Send external notifications
 			notification := models.Notification{
 				Type:    "price_alert",
-				Title:   fmt.Sprintf("Price Alert: %s", alert.Symbol),
+				Title:   fmt.Sprintf(PRICE_ALERT, alert.Symbol),
 				Message: message,
 				Symbol:  alert.Symbol,
 			}
@@ -185,7 +189,7 @@ func (s *Server) BroadcastAlert(symbol, message string) {
 
 	msg := map[string]interface{}{
 		"type":    "alert",
-		"title":   fmt.Sprintf("Price Alert: %s", symbol),
+		"title":   fmt.Sprintf(PRICE_ALERT, symbol),
 		"message": message,
 		"symbol":  symbol,
 	}
@@ -294,7 +298,7 @@ func (s *Server) pollAndCheckAlerts(ctx context.Context) {
 				// Send external notifications
 				notification := models.Notification{
 					Type:    "price_alert",
-					Title:   fmt.Sprintf("Price Alert: %s", alert.Symbol),
+					Title:   fmt.Sprintf(PRICE_ALERT, alert.Symbol),
 					Message: message,
 					Symbol:  alert.Symbol,
 				}

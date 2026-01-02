@@ -13,13 +13,13 @@ import (
 // handleQuote fetches a quote for a symbol
 func (s *Server) handleQuote(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/quote/")
 	if symbol == "" {
-		respondError(w, http.StatusBadRequest, "Symbol required")
+		respondError(w, http.StatusBadRequest, SYMBOL_REQUIRED)
 		return
 	}
 	symbol = strings.ToUpper(symbol)
@@ -57,13 +57,13 @@ func (s *Server) handleQuote(w http.ResponseWriter, r *http.Request) {
 // handleHistorical fetches historical data
 func (s *Server) handleHistorical(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		respondError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		respondError(w, http.StatusMethodNotAllowed, METHOD_NOT_ALLOWED)
 		return
 	}
 
 	symbol := strings.TrimPrefix(r.URL.Path, "/api/historical/")
 	if symbol == "" {
-		respondError(w, http.StatusBadRequest, "Symbol required")
+		respondError(w, http.StatusBadRequest, SYMBOL_REQUIRED)
 		return
 	}
 	symbol = strings.ToUpper(symbol)

@@ -11,6 +11,36 @@ import (
 	"stockmarket/internal/notify"
 )
 
+const (
+	// HTTP Headers
+	HEADER_CONTENT_TYPE = "Content-Type"
+
+	// Content Types
+	CONTENT_TYPE_HTML = "text/html"
+	CONTENT_TYPE_JSON = "application/json"
+
+	// HTTP Status Codes
+	METHOD_NOT_ALLOWED = "Method not allowed"
+
+	// Validation Errors
+	INVALID_JSON      = "Invalid JSON"
+	INVALID_FORM_DATA = "Invalid form data"
+
+	// Errors
+	ALL_FIELDS_REQUIRED           = "All fields are required"
+	FAILED_TO_DECRYPT_API_KEY     = "Failed to decrypt API key"
+	FAILED_TO_ENCRYPT_API_KEY     = "Failed to encrypt API key"
+	FAILED_TO_GET_ANALYZE         = "Failed to get analyze"
+	FAILED_TO_GET_CONFIG          = "Failed to get config"
+	FAILED_TO_GET_HISTORICAL_DATA = "Failed to get historical data"
+	FAILED_TO_GET_QUOTE           = "Failed to get quote"
+	FAILED_TO_UPDATE_CONFIG       = "Failed to update config"
+	INVALID_ALERT_ID              = "Invalid alert ID"
+	INVALID_POLLING_INTERVAL      = "Invalid polling interval"
+	INVALID_PRICE                 = "Invalid price"
+	SYMBOL_REQUIRED               = "Symbol is required"
+)
+
 // Server holds the API server dependencies
 type Server struct {
 	db            *db.DB

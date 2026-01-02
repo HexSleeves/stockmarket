@@ -15,12 +15,12 @@ import (
 // handleConfigMarket handles market data provider configuration updates
 func (s *Server) handleConfigMarket(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		http.Error(w, INVALID_FORM_DATA, http.StatusBadRequest)
 		return
 	}
 
@@ -29,7 +29,7 @@ func (s *Server) handleConfigMarket(w http.ResponseWriter, r *http.Request) {
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -39,14 +39,14 @@ func (s *Server) handleConfigMarket(w http.ResponseWriter, r *http.Request) {
 	if apiKey != "" {
 		encrypted, err := config.Encrypt(apiKey, s.config.EncryptionKey)
 		if err != nil {
-			http.Error(w, "Failed to encrypt API key", http.StatusInternalServerError)
+			http.Error(w, FAILED_TO_ENCRYPT_API_KEY, http.StatusInternalServerError)
 			return
 		}
 		cfg.MarketDataAPIKey = encrypted
 	}
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		http.Error(w, "Failed to update config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_UPDATE_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -56,12 +56,12 @@ func (s *Server) handleConfigMarket(w http.ResponseWriter, r *http.Request) {
 // handleConfigAI handles AI provider configuration updates
 func (s *Server) handleConfigAI(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		http.Error(w, INVALID_FORM_DATA, http.StatusBadRequest)
 		return
 	}
 
@@ -71,7 +71,7 @@ func (s *Server) handleConfigAI(w http.ResponseWriter, r *http.Request) {
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -82,14 +82,14 @@ func (s *Server) handleConfigAI(w http.ResponseWriter, r *http.Request) {
 	if apiKey != "" {
 		encrypted, err := config.Encrypt(apiKey, s.config.EncryptionKey)
 		if err != nil {
-			http.Error(w, "Failed to encrypt API key", http.StatusInternalServerError)
+			http.Error(w, FAILED_TO_ENCRYPT_API_KEY, http.StatusInternalServerError)
 			return
 		}
 		cfg.AIProviderAPIKey = encrypted
 	}
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		http.Error(w, "Failed to update config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_UPDATE_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -99,12 +99,12 @@ func (s *Server) handleConfigAI(w http.ResponseWriter, r *http.Request) {
 // handleConfigStrategy handles trading strategy configuration updates
 func (s *Server) handleConfigStrategy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		http.Error(w, INVALID_FORM_DATA, http.StatusBadRequest)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (s *Server) handleConfigStrategy(w http.ResponseWriter, r *http.Request) {
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -121,7 +121,7 @@ func (s *Server) handleConfigStrategy(w http.ResponseWriter, r *http.Request) {
 	cfg.TradeFrequency = tradeFrequency
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		http.Error(w, "Failed to update config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_UPDATE_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -131,12 +131,12 @@ func (s *Server) handleConfigStrategy(w http.ResponseWriter, r *http.Request) {
 // handleConfigWatchlist handles watchlist updates (adding symbols)
 func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		http.Error(w, INVALID_FORM_DATA, http.StatusBadRequest)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -165,7 +165,7 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 	cfg.TrackedSymbols = append(cfg.TrackedSymbols, symbol)
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		http.Error(w, "Failed to update config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_UPDATE_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -175,7 +175,7 @@ func (s *Server) handleConfigWatchlist(w http.ResponseWriter, r *http.Request) {
 // handleConfigWatchlistSymbol handles individual symbol deletion
 func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -184,13 +184,13 @@ func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Requ
 	symbol := strings.ToUpper(strings.TrimSpace(path))
 
 	if symbol == "" {
-		http.Error(w, "Symbol is required", http.StatusBadRequest)
+		http.Error(w, SYMBOL_REQUIRED, http.StatusBadRequest)
 		return
 	}
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -205,7 +205,7 @@ func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Requ
 	cfg.TrackedSymbols = newSymbols
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		http.Error(w, "Failed to update config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_UPDATE_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
@@ -214,7 +214,7 @@ func (s *Server) handleConfigWatchlistSymbol(w http.ResponseWriter, r *http.Requ
 
 // renderWatchlistSettings renders the watchlist items HTML
 func (s *Server) renderWatchlistSettings(w http.ResponseWriter, symbols []string) {
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
 
 	if len(symbols) == 0 {
 		fmt.Fprint(w, `<div class="text-center py-6"><p class="text-sm text-content-muted">No symbols in watchlist</p></div>`)
@@ -244,32 +244,32 @@ func (s *Server) renderWatchlistSettings(w http.ResponseWriter, symbols []string
 // handleConfigPolling handles polling interval configuration
 func (s *Server) handleConfigPolling(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		http.Error(w, INVALID_FORM_DATA, http.StatusBadRequest)
 		return
 	}
 
 	intervalStr := r.FormValue("polling_interval")
 	interval, err := strconv.Atoi(intervalStr)
 	if err != nil || interval < 1 {
-		http.Error(w, "Invalid polling interval", http.StatusBadRequest)
+		http.Error(w, INVALID_POLLING_INTERVAL, http.StatusBadRequest)
 		return
 	}
 
 	cfg, err := s.db.GetOrCreateConfig()
 	if err != nil {
-		http.Error(w, "Failed to get config", http.StatusInternalServerError)
+		http.Error(w, FAILED_TO_GET_CONFIG, http.StatusInternalServerError)
 		return
 	}
 
 	cfg.PollingInterval = interval
 
 	if err := s.db.UpdateConfig(cfg); err != nil {
-		htmxError(w, "Failed to update config")
+		htmxError(w, FAILED_TO_UPDATE_CONFIG)
 		return
 	}
 
@@ -279,12 +279,12 @@ func (s *Server) handleConfigPolling(w http.ResponseWriter, r *http.Request) {
 // handleConfigNotifications handles notification settings updates
 func (s *Server) handleConfigNotifications(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		http.Error(w, METHOD_NOT_ALLOWED, http.StatusMethodNotAllowed)
 		return
 	}
 
 	if err := r.ParseForm(); err != nil {
-		htmxError(w, "Invalid form data")
+		htmxError(w, INVALID_FORM_DATA)
 		return
 	}
 

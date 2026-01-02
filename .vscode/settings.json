@@ -5,5 +5,7 @@
   },
   "tailwindCSS.includeLanguages": {
     "templ": "html"
-  }
+  },
+  "makefile.configureOnOpen": false,
+  "sonarlint.ls.javaHome": "/usr/lib/jvm/java-21-openjdk-amd64",
 }

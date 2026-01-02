@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"stockmarket/internal/api"
 	"stockmarket/internal/db"
 	"stockmarket/internal/market"
 	"stockmarket/internal/web/pages"
@@ -49,7 +50,7 @@ func (h *TemplHandlers) Dashboard(w http.ResponseWriter, r *http.Request) {
 		ActiveAlerts:   len(alerts),
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.Dashboard(data).Render(r.Context(), w)
 }
 
@@ -64,19 +65,19 @@ func (h *TemplHandlers) Analysis(w http.ResponseWriter, r *http.Request) {
 		Symbol: strings.ToUpper(symbol),
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.AnalysisPage(data).Render(r.Context(), w)
 }
 
 // Recommendations renders the recommendations page using templ
 func (h *TemplHandlers) Recommendations(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.RecommendationsPage().Render(r.Context(), w)
 }
 
 // Alerts renders the alerts page using templ
 func (h *TemplHandlers) Alerts(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.AlertsPage().Render(r.Context(), w)
 }
 
@@ -111,7 +112,7 @@ func (h *TemplHandlers) Settings(w http.ResponseWriter, r *http.Request) {
 		data.SMSEnabled = config.SMSEnabled
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.SettingsPage(data).Render(r.Context(), w)
 }
 
@@ -119,14 +120,18 @@ func (h *TemplHandlers) Settings(w http.ResponseWriter, r *http.Request) {
 
 // PartialWatchlist renders the watchlist partial
 func (h *TemplHandlers) PartialWatchlist(w http.ResponseWriter, r *http.Request) {
-	config, _ := h.db.GetConfig()
+	userConfig, _ := h.db.GetOrCreateConfig()
 
 	var stocks []pages.Stock
-	if config != nil && len(config.TrackedSymbols) > 0 {
-		// Get real market data using Yahoo provider (free, no API key needed)
-		provider := market.NewYahooFinance()
+	if userConfig != nil && len(userConfig.TrackedSymbols) > 0 {
+		// Get the configured market data provider
+		provider, err := market.NewProvider(userConfig.MarketDataProvider, userConfig.MarketDataAPIKey)
+		if err != nil {
+			// Fallback to Yahoo Finance if provider creation fails
+			provider = market.NewYahooFinance()
+		}
 
-		for _, sym := range config.TrackedSymbols {
+		for _, sym := range userConfig.TrackedSymbols {
 			stock := pages.Stock{
 				Symbol: sym,
 				Name:   sym + " Inc.",
@@ -147,7 +152,7 @@ func (h *TemplHandlers) PartialWatchlist(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.WatchlistPartial(stocks).Render(r.Context(), w)
 }
 
@@ -172,7 +177,7 @@ func (h *TemplHandlers) PartialRecommendations(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.RecommendationsPartial(recs).Render(r.Context(), w)
 }
 
@@ -202,7 +207,7 @@ func (h *TemplHandlers) PartialRecommendationsList(w http.ResponseWriter, r *htt
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.RecommendationsListPartial(recs).Render(r.Context(), w)
 }
 
@@ -233,7 +238,7 @@ func (h *TemplHandlers) PartialAnalysisHistory(w http.ResponseWriter, r *http.Re
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.AnalysisHistoryPartial(analyses).Render(r.Context(), w)
 }
 
@@ -275,7 +280,7 @@ func (h *TemplHandlers) PartialAnalysisDetail(w http.ResponseWriter, r *http.Req
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.AnalysisResultCard(result).Render(r.Context(), w)
 }
 
@@ -294,7 +299,7 @@ func (h *TemplHandlers) PartialAlertsList(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.AlertsListPartial(alerts).Render(r.Context(), w)
 }
 
@@ -307,7 +312,7 @@ func (h *TemplHandlers) PartialQuickAnalyze(w http.ResponseWriter, r *http.Reque
 		symbols = config.TrackedSymbols
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.QuickAnalyzePartial(symbols).Render(r.Context(), w)
 }
 
@@ -320,7 +325,7 @@ func (h *TemplHandlers) PartialWatchlistAlertButtons(w http.ResponseWriter, r *h
 		symbols = config.TrackedSymbols
 	}
 
-	w.Header().Set("Content-Type", "text/html")
+	w.Header().Set(api.HEADER_CONTENT_TYPE, api.CONTENT_TYPE_HTML)
 	pages.WatchlistAlertButtonsPartial(symbols).Render(r.Context(), w)
 }
 
