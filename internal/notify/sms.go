@@ -86,7 +86,8 @@ func (s *SMSNotifier) Send(notification models.Notification, target string) erro
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		var errResp map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&errResp)
-		return fmt.Errorf("%w: twilio returned status %d", ErrNotificationFailed, resp.StatusCode)
+		fmt.Printf("[SMS] Twilio error response: %v\n", errResp)
+		return fmt.Errorf("%w: twilio returned status %d: %v", ErrNotificationFailed, resp.StatusCode, errResp)
 	}
 
 	return nil
